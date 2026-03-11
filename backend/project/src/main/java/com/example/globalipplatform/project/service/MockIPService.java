@@ -1,8 +1,12 @@
 package com.example.globalipplatform.project.service;
 
+import com.example.globalipplatform.project.DTO.FamilyDistributionDTO;
+import com.example.globalipplatform.project.DTO.FilingTrendDTO;
 import com.example.globalipplatform.project.DTO.PatentDTO;
 import com.example.globalipplatform.project.DTO.PatentSearchRequest;
 import com.example.globalipplatform.project.DTO.PatentSearchResponse;
+import com.example.globalipplatform.project.DTO.TechnologyDistributionDTO;
+import com.example.globalipplatform.project.DTO.TopCitedDTO;
 import com.example.globalipplatform.project.DTO.TrademarkDTO;
 import com.example.globalipplatform.project.DTO.TrademarkSearchRequest;
 import com.example.globalipplatform.project.DTO.TrademarkSearchResponse;
@@ -16,7 +20,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -262,4 +270,62 @@ public class MockIPService implements IPService {
         dto.setIsCoreTrademark(trademark.getIsCoreTrademark());
         return dto;
     }
+
+    @Override
+public List<FilingTrendDTO> getFilingTrends() {
+    List<Object[]> patentYears = patentRepository.countPatentsByFilingYear();
+    List<Object[]> trademarkYears = trademarkRepository.countTrademarksByFilingYear();
+    
+    Map<Integer, FilingTrendDTO> trendMap = new HashMap<>();
+    for (Object[] row : patentYears) {
+        int year = ((Number) row[0]).intValue();
+        long count = ((Number) row[1]).longValue();
+        trendMap.put(year, new FilingTrendDTO(year, count, 0));
+    }
+    for (Object[] row : trademarkYears) {
+        int year = ((Number) row[0]).intValue();
+        long count = ((Number) row[1]).longValue();
+        trendMap.computeIfAbsent(year, k -> new FilingTrendDTO(year, 0, 0))
+                .setTrademarkCount(count);
+    }
+    List<FilingTrendDTO> list = new ArrayList<>(trendMap.values());
+    list.sort(Comparator.comparing(FilingTrendDTO::getYear));
+    return list;
+}
+
+@Override
+public List<TopCitedDTO> getTopCitedPatents(int limit) {
+    List<Object[]> results = patentRepository.findTopCitedPatents(limit);
+    return results.stream()
+        .map(row -> new TopCitedDTO(
+            ((Number) row[0]).longValue(),
+            (String) row[1],
+            ((Number) row[2]).intValue()
+        ))
+        .collect(Collectors.toList());
+}
+
+@Override
+public List<FamilyDistributionDTO> getFamilyDistribution() {
+    List<Object[]> results = patentRepository.countByFamilyId();
+    return results.stream()
+        .map(row -> new FamilyDistributionDTO(
+            (String) row[0],
+            ((Number) row[1]).longValue()
+        ))
+        .collect(Collectors.toList());
+}
+
+@Override
+public List<TechnologyDistributionDTO> getTechnologyDistribution() {
+    List<Object[]> results = patentRepository.countByTechnology();
+    return results.stream()
+        .map(row -> new TechnologyDistributionDTO(
+            (String) row[0],
+            ((Number) row[1]).longValue()
+        ))
+        .collect(Collectors.toList());
+}
+
+
 }

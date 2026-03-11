@@ -1,7 +1,8 @@
-import DashboardLayout from "../components/layouts/DashboardLayout";
+// src/Pages/AnalystDashboard.jsx
 import { useEffect, useState } from "react";
+import DashboardLayout from "../components/layouts/DashboardLayout";
 import axios from "axios";
-import { Loader2, TrendingUp, BarChart3, Bell, FileText } from "lucide-react";
+import { Loader2, TrendingUp, BarChart3, Bell, FileText, Award } from "lucide-react";
 
 const API_BASE_URL = "http://localhost:8080/api";
 
@@ -31,7 +32,7 @@ const AnalystDashboard = () => {
     });
   }, []);
 
-  // Build stats from analytics data, fall back to dashboard data, then to defaults
+  // Build stats from analytics data, fallback to dashboard data, then defaults
   const stats = [
     {
       label: "Total Patents",
@@ -127,7 +128,7 @@ const AnalystDashboard = () => {
           {features.length > 0 && (
             <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-xl shadow-md">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <BarChart3 size={18} className="text-emerald-400" /> Available Features
+                <Award size={18} className="text-emerald-400" /> Available Features
               </h3>
               <ul className="space-y-3">
                 {features.map((feature, i) => (

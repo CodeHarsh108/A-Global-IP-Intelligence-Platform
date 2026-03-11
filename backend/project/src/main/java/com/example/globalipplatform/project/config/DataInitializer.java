@@ -28,7 +28,7 @@ public class DataInitializer {
             // Create test analyst user if not exists
             if (!userRepository.existsByEmail("analyst@test.com")) {
                 User analyst = new User();
-                analyst.setUsername("Analyst User");
+                analyst.setUsername("Analyst");
                 analyst.setEmail("analyst@test.com");
                 analyst.setPassword(passwordEncoder.encode("analyst123"));
                 analyst.setRole(Role.ANALYST);

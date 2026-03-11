@@ -6,12 +6,25 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.globalipplatform.project.DTO.FamilyDistributionDTO;
+import com.example.globalipplatform.project.DTO.FilingTrendDTO;
+import com.example.globalipplatform.project.DTO.TechnologyDistributionDTO;
+import com.example.globalipplatform.project.DTO.TopCitedDTO;
+import com.example.globalipplatform.project.service.IPService;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/analyst")
 public class AnalystController {
+
+    private final IPService ipService;
+
+    public AnalystController(IPService ipService) {
+        this.ipService = ipService;
+    }
 
     @GetMapping("/dashboard")
     @PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
@@ -66,4 +79,31 @@ public class AnalystController {
         });
         return ResponseEntity.ok(response);
     }
+
+
+@GetMapping("/visualizations/trends")
+@PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
+public ResponseEntity<List<FilingTrendDTO>> getFilingTrends() {
+    return ResponseEntity.ok(ipService.getFilingTrends());
+}
+
+@GetMapping("/visualizations/top-cited")
+@PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
+public ResponseEntity<List<TopCitedDTO>> getTopCited(
+        @RequestParam(defaultValue = "10") int limit) {
+    return ResponseEntity.ok(ipService.getTopCitedPatents(limit));
+}
+
+@GetMapping("/visualizations/families")
+@PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
+public ResponseEntity<List<FamilyDistributionDTO>> getFamilyDistribution() {
+    return ResponseEntity.ok(ipService.getFamilyDistribution());
+}
+
+@GetMapping("/visualizations/technologies")
+@PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
+public ResponseEntity<List<TechnologyDistributionDTO>> getTechnologyDistribution() {
+    return ResponseEntity.ok(ipService.getTechnologyDistribution());
+}
+
 }

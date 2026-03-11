@@ -33,4 +33,16 @@ public interface PatentRepository extends JpaRepository<Patent, Long> {
     List<String> findAllStatuses();
     
     long countByIsCorePatentTrue();
+
+@Query("SELECT YEAR(p.filingDate) as year, COUNT(p) FROM Patent p GROUP BY YEAR(p.filingDate) ORDER BY year")
+List<Object[]> countPatentsByFilingYear();
+
+@Query("SELECT p.id, p.title, p.citationCount FROM Patent p WHERE p.citationCount > 0 ORDER BY p.citationCount DESC LIMIT :limit")
+List<Object[]> findTopCitedPatents(@Param("limit") int limit);
+
+@Query("SELECT p.familyId, COUNT(p) FROM Patent p WHERE p.familyId IS NOT NULL GROUP BY p.familyId ORDER BY COUNT(p) DESC")
+List<Object[]> countByFamilyId();
+
+@Query("SELECT p.technology, COUNT(p) FROM Patent p WHERE p.technology IS NOT NULL GROUP BY p.technology ORDER BY COUNT(p) DESC")
+List<Object[]> countByTechnology();
 }

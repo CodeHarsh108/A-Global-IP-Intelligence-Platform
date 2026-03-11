@@ -17,4 +17,7 @@ public interface TrademarkRepository extends JpaRepository<Trademark, Long> {
 
         @Query("SELECT DISTINCT t.status FROM Trademark t WHERE t.status IS NOT NULL")
         List<String> findAllStatuses();
+
+@Query("SELECT YEAR(t.filingDate) as year, COUNT(t) FROM Trademark t GROUP BY YEAR(t.filingDate) ORDER BY year")
+List<Object[]> countTrademarksByFilingYear();
 }

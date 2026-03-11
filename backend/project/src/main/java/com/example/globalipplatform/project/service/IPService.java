@@ -1,8 +1,12 @@
 package com.example.globalipplatform.project.service;
 
+import com.example.globalipplatform.project.DTO.FamilyDistributionDTO;
+import com.example.globalipplatform.project.DTO.FilingTrendDTO;
 import com.example.globalipplatform.project.DTO.PatentDTO;
 import com.example.globalipplatform.project.DTO.PatentSearchRequest;
 import com.example.globalipplatform.project.DTO.PatentSearchResponse;
+import com.example.globalipplatform.project.DTO.TechnologyDistributionDTO;
+import com.example.globalipplatform.project.DTO.TopCitedDTO;
 import com.example.globalipplatform.project.DTO.TrademarkDTO;
 import com.example.globalipplatform.project.DTO.TrademarkSearchRequest;
 import com.example.globalipplatform.project.DTO.TrademarkSearchResponse;
@@ -32,4 +36,9 @@ public interface IPService {
     long getTotalTrademarkCount();
     long getPatentCountByJurisdiction(String jurisdiction);
     long getPatentCountByStatus(String status);
+
+List<FilingTrendDTO> getFilingTrends();
+List<TopCitedDTO> getTopCitedPatents(int limit);
+List<FamilyDistributionDTO> getFamilyDistribution();
+List<TechnologyDistributionDTO> getTechnologyDistribution();
 }
