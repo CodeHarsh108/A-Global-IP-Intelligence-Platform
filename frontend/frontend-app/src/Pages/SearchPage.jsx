@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 import {
     Search,
     Globe,
@@ -26,9 +27,11 @@ const getAuthHeader = () => {
 
 const SearchPage = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const { hasRole } = useAuth();
+    const canUseAdvancedFilters = hasRole('ANALYST') || hasRole('ADMIN');
     const [query, setQuery] = useState("");
     const [type, setType] = useState("PATENT"); // PATENT | TRADEMARK
-    const [source, setSource] = useState("ALL"); // for legacy IPSearch fallback
 
     // Filters
     const [jurisdiction, setJurisdiction] = useState("");
@@ -68,9 +71,9 @@ const SearchPage = () => {
         });
     }, [type]);
 
+
     const handleSearch = useCallback(
         async (overridePage = 0) => {
-            if (!query.trim()) return;
             setLoading(true);
             setHasSearched(true);
             setError("");
@@ -109,7 +112,6 @@ const SearchPage = () => {
                 }
 
                 const data = response.data;
-                // PatentSearchResponse uses 'patents', TrademarkSearchResponse uses 'trademarks'
                 const items =
                     type === "PATENT"
                         ? data.patents ?? data.content ?? []
@@ -133,6 +135,16 @@ const SearchPage = () => {
         [query, type, jurisdiction, status, yearFrom, yearTo, niceClass, pageSize]
     );
 
+    // Initial load and URL param handling
+    useEffect(() => {
+        const q = searchParams.get("q");
+        if (q !== null) {
+            setQuery(q.trim());
+        }
+        handleSearch(0);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]); // Only run when URL params change
+
     const handleSubmit = (e) => {
         e.preventDefault();
         handleSearch(0);
@@ -145,11 +157,10 @@ const SearchPage = () => {
 
     const handleResultClick = (item) => {
         const idParam = item.id;
-        const typeParam = type.toLowerCase(); // "patent" or "trademark"
+        const typeParam = type.toLowerCase();
         navigate(`/ip/${idParam}?type=${typeParam}`);
     };
 
-    // Format date helper
     const formatDate = (dateStr) => {
         if (!dateStr) return "N/A";
         return new Date(dateStr).toLocaleDateString("en-US", {
@@ -161,7 +172,6 @@ const SearchPage = () => {
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] dark:bg-gray-950 transition-colors duration-300">
-            {/* Background blobs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] right-[-5%] w-[40rem] h-[40rem] rounded-full bg-blue-400/5 blur-[100px] animate-pulse" />
                 <div
@@ -171,7 +181,6 @@ const SearchPage = () => {
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                {/* Header */}
                 <div className="text-center mb-10">
                     <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-4">
                         Global IP{" "}
@@ -182,7 +191,6 @@ const SearchPage = () => {
                     </p>
                 </div>
 
-                {/* Search Card */}
                 <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl p-6 md:p-8 mb-8 transition-all">
                     <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4">
                         <div className="relative flex-1">
@@ -192,7 +200,7 @@ const SearchPage = () => {
                             />
                             <input
                                 type="text"
-                                placeholder="Search by keyword, application number, or applicant..."
+                                placeholder={canUseAdvancedFilters ? "Search by keyword, application number, or applicant..." : "Search by keyword"}
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all dark:text-white text-lg"
@@ -200,14 +208,13 @@ const SearchPage = () => {
                         </div>
                         <button
                             type="submit"
-                            disabled={loading || !query.trim()}
+                            disabled={loading}
                             className="px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold rounded-2xl shadow-lg shadow-blue-600/20 transform active:scale-95 transition-all flex items-center justify-center gap-2 min-w-[140px]"
                         >
                             {loading ? <Loader2 className="animate-spin" size={24} /> : "Search Now"}
                         </button>
                     </form>
 
-                    {/* Type Tabs */}
                     <div className="flex flex-wrap items-center gap-6 mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
                         <div className="flex items-center gap-3">
                             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
@@ -219,8 +226,6 @@ const SearchPage = () => {
                                         key={t}
                                         onClick={() => {
                                             setType(t);
-                                            setResults([]);
-                                            setHasSearched(false);
                                             setJurisdiction("");
                                             setStatus("");
                                             setNiceClass("");
@@ -236,21 +241,20 @@ const SearchPage = () => {
                             </div>
                         </div>
 
-                        {/* Toggle Filters Button */}
-                        <button
-                            type="button"
-                            onClick={() => setShowFilters((v) => !v)}
-                            className="ml-auto flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-blue-600 transition-colors px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 hover:border-blue-400"
-                        >
-                            <Filter size={14} /> Advanced Filters
-                            {showFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        </button>
+                        {canUseAdvancedFilters && (
+                            <button
+                                type="button"
+                                onClick={() => setShowFilters((v) => !v)}
+                                className="ml-auto flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-blue-600 transition-colors px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 hover:border-blue-400"
+                            >
+                                <Filter size={14} /> Advanced Filters
+                                {showFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                            </button>
+                        )}
                     </div>
 
-                    {/* Advanced Filter Panel */}
-                    {showFilters && (
+                    {canUseAdvancedFilters && showFilters && (
                         <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                            {/* Jurisdiction */}
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">
                                     <Globe size={12} className="inline mr-1" /> Jurisdiction
@@ -267,7 +271,6 @@ const SearchPage = () => {
                                 </select>
                             </div>
 
-                            {/* Status */}
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">
                                     <CheckCircle size={12} className="inline mr-1" /> Status
@@ -284,7 +287,6 @@ const SearchPage = () => {
                                 </select>
                             </div>
 
-                            {/* Year Range */}
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">
                                     <Calendar size={12} className="inline mr-1" /> Year From
@@ -314,7 +316,6 @@ const SearchPage = () => {
                                 />
                             </div>
 
-                            {/* Nice Class – trademark only */}
                             {type === "TRADEMARK" && (
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">
@@ -333,14 +334,12 @@ const SearchPage = () => {
                     )}
                 </div>
 
-                {/* Error Banner */}
                 {error && (
                     <div className="mb-6 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl text-red-600 dark:text-red-400 text-sm font-medium">
                         {error}
                     </div>
                 )}
 
-                {/* Results */}
                 <div className="space-y-6">
                     {loading ? (
                         <div className="py-20 text-center">
@@ -353,7 +352,6 @@ const SearchPage = () => {
                         </div>
                     ) : results.length > 0 ? (
                         <>
-                            {/* Results Count */}
                             <div className="flex items-center justify-between">
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
                                     Showing{" "}
@@ -375,7 +373,6 @@ const SearchPage = () => {
                                         onClick={() => handleResultClick(item)}
                                         className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 hover:shadow-2xl transition-all hover:border-blue-500/30 overflow-hidden cursor-pointer"
                                     >
-                                        {/* Hover gradient */}
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500" />
 
                                         <div className="flex justify-between items-start mb-4 relative z-10">
@@ -439,7 +436,6 @@ const SearchPage = () => {
                                 ))}
                             </div>
 
-                            {/* Pagination */}
                             {totalPages > 1 && (
                                 <div className="flex justify-center gap-2 mt-8">
                                     <button

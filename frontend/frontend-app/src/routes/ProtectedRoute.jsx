@@ -1,8 +1,8 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const ProtectedRoute = ({ children, role }) => {
-  const { user, hasRole, loading } = useAuth();
+const ProtectedRoute = ({ children, role, feature }) => {
+  const { user, hasRole, isAuthorized, loading } = useAuth();
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">
@@ -24,6 +24,15 @@ const ProtectedRoute = ({ children, role }) => {
     return <Navigate to={rolePath[user.role] || "/"} replace />;
   }
 
+  // Check strict feature authorization if specified
+  if (feature && !isAuthorized(feature)) {
+    const rolePath = {
+      'ADMIN': '/admin-dashboard',
+      'ANALYST': '/analyst-dashboard',
+      'USER': '/user-dashboard'
+    };
+    return <Navigate to={rolePath[user.role] || "/"} replace />;
+  }
   return children;
 };
 

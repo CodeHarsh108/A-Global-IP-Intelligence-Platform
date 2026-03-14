@@ -16,7 +16,6 @@ import com.example.globalipplatform.project.repository.PatentRepository;
 import com.example.globalipplatform.project.repository.TrademarkRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -38,25 +37,89 @@ public class MockIPService implements IPService {
 
     @Override
     public PatentSearchResponse searchPatents(PatentSearchRequest request, Pageable pageable) {
-        Page<Patent> patentPage;
+        // Fetch all and filter in-memory so jurisdiction/status/year filters work
+        // correctly
+        List<Patent> all = patentRepository.findAll();
+        System.out.println("Search Debug: total patents in DB = " + all.size());
 
-        if (request.getQuery() != null && !request.getQuery().isEmpty()) {
-            patentPage = patentRepository.searchPatentsSimple(request.getQuery(), pageable);
-        } else {
-            patentPage = patentRepository.findAll(pageable);
-        }
+        String query = request.getQuery() != null ? request.getQuery().toLowerCase().trim() : null;
+        String jurisdiction = request.getJurisdiction();
+        String status = request.getStatus();
+        Integer yearFrom = request.getYearFrom();
+        Integer yearTo = request.getYearTo();
 
-        List<PatentDTO> patents = patentPage.getContent()
-                .stream()
+        System.out.println(
+                "DEBUG: searchPatents - query: " + query + ", jurisdiction: " + jurisdiction + ", status: " + status);
+
+        List<Patent> filtered = all.stream().filter(p -> {
+            // query filter — matches title, abstract, assignee, or inventors
+            if (query != null && !query.trim().isEmpty()) {
+                String q = query.toLowerCase().trim();
+                boolean matches = false;
+                if (p.getTitle() != null && p.getTitle().toLowerCase().contains(q))
+                    matches = true;
+                else if (p.getAbstractText() != null && p.getAbstractText().toLowerCase().contains(q))
+                    matches = true;
+                else if (p.getAssignee() != null && p.getAssignee().toLowerCase().contains(q))
+                    matches = true;
+                else if (p.getInventors() != null && p.getInventors().toLowerCase().contains(q))
+                    matches = true;
+                else if (p.getTechnology() != null && p.getTechnology().toLowerCase().contains(q))
+                    matches = true;
+                else if (p.getAssetNumber() != null && p.getAssetNumber().toLowerCase().contains(q))
+                    matches = true;
+
+                if (!matches)
+                    return false;
+            }
+            // jurisdiction filter - Handle "ALL" as wildcard
+            if (jurisdiction != null && !jurisdiction.trim().isEmpty() && !"ALL".equalsIgnoreCase(jurisdiction.trim())) {
+                if (p.getJurisdiction() == null || !jurisdiction.trim().equalsIgnoreCase(p.getJurisdiction().trim()))
+                    return false;
+            }
+            // status filter - Handle "ALL" as wildcard
+            if (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status.trim())) {
+                if (p.getStatus() == null || !status.trim().equalsIgnoreCase(p.getStatus().trim()))
+                    return false;
+            }
+            // technology filter - Add technology filter check
+            String techFilter = request.getTechnology();
+            if (techFilter != null && !techFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(techFilter.trim())) {
+                if (p.getTechnology() == null || !techFilter.trim().equalsIgnoreCase(p.getTechnology().trim()))
+                    return false;
+            }
+            // year range filter
+            if (p.getFilingDate() != null) {
+                int year = p.getFilingDate().getYear();
+                if (yearFrom != null && year < yearFrom)
+                    return false;
+                if (yearTo != null && year > yearTo)
+                    return false;
+            } else if (yearFrom != null || yearTo != null) {
+                return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+
+        // Manual pagination
+        int pageNum = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int total = filtered.size();
+        int totalPagesCount = (int) Math.ceil((double) total / pageSize);
+        int fromIdx = Math.min(pageNum * pageSize, total);
+        int toIdx = Math.min(fromIdx + pageSize, total);
+        List<Patent> page = filtered.subList(fromIdx, toIdx);
+
+        List<PatentDTO> patents = page.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
 
         return new PatentSearchResponse(
                 patents,
-                patentPage.getTotalElements(),
-                patentPage.getTotalPages(),
-                patentPage.getNumber(),
-                patentPage.getSize());
+                total,
+                totalPagesCount,
+                pageNum,
+                pageSize);
     }
 
     @Override
@@ -104,37 +167,44 @@ public class MockIPService implements IPService {
         Integer yearFrom = request.getYearFrom();
         Integer yearTo = request.getYearTo();
 
+        System.out.println("DEBUG: searchTrademarks - query: " + query + ", jurisdiction: " + jurisdiction
+                + ", status: " + status);
+
         List<Trademark> filtered = all.stream().filter(t -> {
             // query filter — matches mark, assignee, or goodsServices
-            if (query != null && !query.isEmpty()) {
+            if (query != null && !query.trim().isEmpty()) {
+                String q = query.toLowerCase().trim();
                 boolean matches = false;
-                if (t.getMark() != null && t.getMark().toLowerCase().contains(query))
+                if (t.getMark() != null && t.getMark().toLowerCase().contains(q))
                     matches = true;
-                if (t.getAssignee() != null && t.getAssignee().toLowerCase().contains(query))
+                else if (t.getAssignee() != null && t.getAssignee().toLowerCase().contains(q))
                     matches = true;
-                if (t.getGoodsServices() != null && t.getGoodsServices().toLowerCase().contains(query))
+                else if (t.getGoodsServices() != null && t.getGoodsServices().toLowerCase().contains(q))
                     matches = true;
+                else if (t.getAssetNumber() != null && t.getAssetNumber().toLowerCase().contains(q))
+                    matches = true;
+
                 if (!matches)
                     return false;
             }
-            // jurisdiction filter
-            if (jurisdiction != null && !jurisdiction.isEmpty()) {
-                if (!jurisdiction.equalsIgnoreCase(t.getJurisdiction()))
+            // jurisdiction filter - Handle "ALL" as wildcard
+            if (jurisdiction != null && !jurisdiction.trim().isEmpty() && !"ALL".equalsIgnoreCase(jurisdiction.trim())) {
+                if (t.getJurisdiction() == null || !jurisdiction.trim().equalsIgnoreCase(t.getJurisdiction().trim()))
                     return false;
             }
-            // status filter
-            if (status != null && !status.isEmpty()) {
-                if (!status.equalsIgnoreCase(t.getStatus()))
+            // status filter - Handle "ALL" as wildcard
+            if (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status.trim())) {
+                if (t.getStatus() == null || !status.trim().equalsIgnoreCase(t.getStatus().trim()))
                     return false;
             }
             // owner filter
-            if (owner != null && !owner.isEmpty()) {
-                if (t.getAssignee() == null || !t.getAssignee().toLowerCase().contains(owner))
+            if (owner != null && !owner.trim().isEmpty()) {
+                if (t.getAssignee() == null || !t.getAssignee().toLowerCase().contains(owner.toLowerCase().trim()))
                     return false;
             }
-            // niceClass filter
-            if (niceClass != null && !niceClass.isEmpty()) {
-                if (t.getNiceClasses() == null || !t.getNiceClasses().contains(niceClass))
+            // niceClass filter - Handle "ALL" as wildcard
+            if (niceClass != null && !niceClass.trim().isEmpty() && !"ALL".equalsIgnoreCase(niceClass.trim())) {
+                if (t.getNiceClasses() == null || !t.getNiceClasses().contains(niceClass.trim()))
                     return false;
             }
             // year range filter
@@ -144,6 +214,8 @@ public class MockIPService implements IPService {
                     return false;
                 if (yearTo != null && year > yearTo)
                     return false;
+            } else if (yearFrom != null || yearTo != null) {
+                return false;
             }
             return true;
         }).collect(Collectors.toList());

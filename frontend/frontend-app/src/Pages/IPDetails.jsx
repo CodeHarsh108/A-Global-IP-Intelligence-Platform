@@ -61,6 +61,50 @@ const IPDetailPage = () => {
     });
   };
 
+  const handleExport = () => {
+    if (!data) return;
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    const rows = [];
+
+    if (type === "patent") {
+      rows.push(["Field", "Value"]);
+      rows.push(["Title", data.title]);
+      rows.push(["Asset Number", data.assetNumber || data.applicationNumber]);
+      rows.push(["Jurisdiction", data.jurisdiction]);
+      rows.push(["Status", data.status]);
+      rows.push(["Assignee", data.assignee]);
+      rows.push(["Inventors", data.inventors]);
+      rows.push(["Filing Date", data.filingDate]);
+      rows.push(["Publication Date", data.publicationDate]);
+      rows.push(["Grant Date", data.grantDate]);
+      rows.push(["Abstract", `"${data.abstractText?.replace(/"/g, '""')}"`]);
+    } else {
+      rows.push(["Field", "Value"]);
+      rows.push(["Mark", data.mark || data.title]);
+      rows.push(["Application Number", data.applicationNumber]);
+      rows.push(["Registration Number", data.registrationNumber]);
+      rows.push(["Jurisdiction", data.jurisdiction]);
+      rows.push(["Status", data.status]);
+      rows.push(["Owner", data.assignee]);
+      rows.push(["Mark Type", data.markType]);
+      rows.push(["Filing Date", data.filingDate]);
+      rows.push(["Goods & Services", `"${data.goodsServices?.replace(/"/g, '""')}"`]);
+    }
+
+    rows.forEach(row => {
+      csvContent += row.join(",") + "\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${type}_details_${data.assetNumber || data.applicationNumber || id}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -154,7 +198,10 @@ const IPDetailPage = () => {
                     className={bookmarked ? "fill-amber-400 text-amber-400" : "text-slate-400"}
                   />
                 </button>
-                <button className="flex items-center gap-3 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-all">
+                <button 
+                  onClick={handleExport}
+                  className="flex items-center gap-3 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-all"
+                >
                   <Download size={18} /> Export Data
                 </button>
               </div>
@@ -400,15 +447,21 @@ const IPDetailPage = () => {
               )}
             </div>
             <div className="flex gap-3">
-              <button
-                onClick={() => setBookmarked(!bookmarked)}
-                className="p-3 bg-slate-800 border border-slate-700 rounded-xl hover:border-slate-500 transition-all"
-              >
-                <Star
-                  size={20}
-                  className={bookmarked ? "fill-amber-400 text-amber-400" : "text-slate-400"}
-                />
-              </button>
+                <button
+                  onClick={() => setBookmarked(!bookmarked)}
+                  className="p-3 bg-slate-800 border border-slate-700 rounded-xl hover:border-slate-500 transition-all"
+                >
+                  <Star
+                    size={20}
+                    className={bookmarked ? "fill-amber-400 text-amber-400" : "text-slate-400"}
+                  />
+                </button>
+                <button 
+                  onClick={handleExport}
+                  className="flex items-center gap-3 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-all"
+                >
+                  <Download size={18} /> Export Data
+                </button>
             </div>
           </div>
         </header>
