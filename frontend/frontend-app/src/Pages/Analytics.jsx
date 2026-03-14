@@ -252,6 +252,13 @@ const Analytics = () => {
     "bg-emerald-500",
     "bg-teal-500",
   ];
+
+  const filingTrends = {
+    months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    patents: [45, 52, 48, 61, 55, 67, 72, 65, 59, 75, 82, 88],
+    trademarks: [32, 38, 35, 42, 40, 48, 52, 45, 42, 55, 60, 65]
+  };
+
   const topJurisdictions = [
     { country: "United States (USPTO)", count: 245, percentage: 32 },
     { country: "European Union (EPO)", count: 178, percentage: 23 },
