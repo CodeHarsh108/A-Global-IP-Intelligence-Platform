@@ -238,11 +238,81 @@ const Analytics = () => {
     setShowReportModal(false);
   };
 
-  // Summary card values
-  const totalFilings = filteredPatents.length + filteredTrademarks.length;
-  const activePatents = filteredPatents.length;
-  const pendingApplications = filteredTrademarks.length;
-  const jurisdictionsCount = jurisdictionData.length;
+  const barColors = [
+    "bg-blue-500",
+    "bg-indigo-500",
+    "bg-violet-500",
+    "bg-purple-500",
+    "bg-pink-500",
+    "bg-rose-500",
+    "bg-orange-500",
+    "bg-amber-500",
+    "bg-yellow-500",
+    "bg-lime-500",
+    "bg-emerald-500",
+    "bg-teal-500",
+  ];
+  const topJurisdictions = [
+    { country: "United States (USPTO)", count: 245, percentage: 32 },
+    { country: "European Union (EPO)", count: 178, percentage: 23 },
+    { country: "China (CNIPA)", count: 156, percentage: 20 },
+    { country: "Japan (JPO)", count: 98, percentage: 13 },
+    { country: "South Korea (KIPO)", count: 67, percentage: 9 },
+    { country: "Others", count: 23, percentage: 3 }
+  ];
+
+  const topAssignees = [
+    { name: "MedTech Corp", count: 34, trend: "+12%" },
+    { name: "AgroTech Industries", count: 28, trend: "+8%" },
+    { name: "Nano Solutions Inc", count: 23, trend: "+15%" },
+    { name: "BioGen Research", count: 21, trend: "+5%" },
+    { name: "Quantum Computing Ltd", count: 18, trend: "+22%" }
+  ];
+
+  const statusDistribution = [
+    { status: "Granted", count: 342, percentage: 45, color: "bg-green-500" },
+    { status: "Pending", count: 256, percentage: 34, color: "bg-yellow-500" },
+    { status: "Published", count: 98, percentage: 13, color: "bg-blue-500" },
+    { status: "Expired", count: 62, percentage: 8, color: "bg-red-500" }
+  ];
+
+  // Summary card values — prefer backend data, fallback to mock counts
+  const totalFilings = analyticsData?.totalPatents != null && analyticsData?.totalTrademarks != null
+    ? analyticsData.totalPatents + analyticsData.totalTrademarks
+    : 758;
+  const activePatents = analyticsData?.totalPatents ?? 342;
+  const pendingApplications = analyticsData?.totalTrademarks ?? 256;
+  const jurisdictionsCount = 12;
+
+  const handleExport = () => {
+    // Prepare CSV data for Top Jurisdictions
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "SECTION: TOP JURISDICTIONS\n";
+    csvContent += "Country,Count,Percentage\n";
+    topJurisdictions.forEach(j => {
+      csvContent += `${j.country},${j.count},${j.percentage}%\n`;
+    });
+
+    csvContent += "\nSECTION: STATUS DISTRIBUTION\n";
+    csvContent += "Status,Count,Percentage\n";
+    statusDistribution.forEach(s => {
+      csvContent += `${s.status},${s.count},${s.percentage}%\n`;
+    });
+
+    csvContent += "\nSECTION: TOP ASSIGNEES\n";
+    csvContent += "Name,Count,Trend\n";
+    topAssignees.forEach(a => {
+      csvContent += `"${a.name}",${a.count},${a.trend}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `IP_Analytics_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   if (loading) {
     return (
@@ -270,20 +340,26 @@ const Analytics = () => {
           </div>
 
           <div className="flex gap-3">
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-              className="px-4 py-2 text-cyan-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="1m">Last Month</option>
-              <option value="3m">Last 3 Months</option>
-              <option value="6m">Last 6 Months</option>
-              <option value="1y">Last Year</option>
-              <option value="all">All Time</option>
-            </select>
+            <div className="relative">
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="appearance-none pl-4 pr-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold border-0 rounded-lg text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-md transition-all"
+              >
+                <option value="1m" className="bg-gray-900 text-white">Last Month</option>
+                <option value="3m" className="bg-gray-900 text-white">Last 3 Months</option>
+                <option value="6m" className="bg-gray-900 text-white">Last 6 Months</option>
+                <option value="1y" className="bg-gray-900 text-white">Last Year</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-white">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
 
-            <button
-              onClick={() => setShowReportModal(true)}
+            <button 
+              onClick={handleExport}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2 text-sm"
             >
               <Download size={16} />
@@ -324,93 +400,68 @@ const Analytics = () => {
           />
         </div>
 
-        {/* === VISUALIZATIONS SECTION === */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <TrendingUp size={20} className="text-blue-500" /> IP Intelligence Visualizations
-          </h2>
-
-          {/* Row 0: Top Cited Bar Chart – full width */}
-          <ChartCard title="Top 10 Cited Patents" description="Patents with the highest citation count in the selected period">
-            {topCitedData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={450}>
-                <BarChart
-                  data={topCitedData}
-                  layout="vertical"
-                  margin={{ left: 200, right: 20, top: 10, bottom: 10 }}
+        {/* Charts Row 1 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Filing Trends Chart */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Filing Trends
+              </h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setDataType("patents")}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${dataType === "patents"
+                    ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-400/40"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-gray-600"
+                    }`}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                  <XAxis type="number" stroke="#aaa" />
-                  <YAxis
-                    type="category"
-                    dataKey="title"
-                    width={190}
-                    stroke="#aaa"
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={(value) =>
-                      value.length > 40 ? value.substring(0, 37) + "..." : value
-                    }
-                  />
-                  <Tooltip contentStyle={{ backgroundColor: '#ffffff', borderColor: '#374151' }} />
-                  <Bar dataKey="citationCount" fill="#8884d8" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <EmptyState message="No citation data for this period" />
-            )}
-          </ChartCard>
+                  Patents
+                </button>
+                <button
+                  onClick={() => setDataType("trademarks")}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${dataType === "trademarks"
+                    ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md shadow-purple-400/40"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-gray-600"
+                    }`}
+                >
+                  Trademarks
+                </button>
+              </div>
+            </div>
 
-          {/* Row 1: Filing Trends + Technology Distribution */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ChartCard title="Filing Trends" description="Patent and trademark filings over time">
-              {trendsData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={trendsData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                    <XAxis dataKey="year" stroke="#aaa" />
-                    <YAxis stroke="#aaa" />
-                    <Tooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151' }} />
-                    <Legend />
-                    <Line type="monotone" dataKey="patentCount" stroke="#8884d8" name="Patents" />
-                    <Line type="monotone" dataKey="trademarkCount" stroke="#82ca9d" name="Trademarks" />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <EmptyState message="No filing data for this period" />
-              )}
-            </ChartCard>
-
-            <ChartCard title="Technology Distribution" description="Top technology areas by patent count">
-              {techDistData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={techDistData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                      onClick={(data) => setSelectedTech(data.name)}
-                    >
-                      {techDistData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <EmptyState message="No technology data for this period" />
-              )}
-              {selectedTech && (
-                <div className="mt-2 text-xs text-gray-500">
-                  Clicked: {selectedTech} – (drill‑down coming soon)
+            {/* Simple Bar Chart Representation — responds to timeRange dropdown */}
+            {(() => {
+              const rangeMap = { "1m": 1, "3m": 3, "6m": 6, "1y": 12 };
+              const count = rangeMap[timeRange] ?? 6;
+              const slicedMonths = filingTrends.months.slice(-count);
+              const slicedValues = filingTrends[dataType].slice(-count);
+              const globalStartIndex = filingTrends.months.length - count;
+              const max = Math.max(...slicedValues);
+              return (
+                <div className="space-y-3">
+                  {slicedMonths.map((month, index) => {
+                    const value = slicedValues[index];
+                    const percentage = max > 0 ? (value / max) * 100 : 0;
+                    const color = barColors[(globalStartIndex + index) % barColors.length];
+                    return (
+                      <div key={month} className="flex items-center gap-3">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 w-8 font-medium">{month}</span>
+                        <div className="flex-1 h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${color} rounded-full transition-all duration-500`}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-600 dark:text-gray-400 w-8 text-right font-semibold">
+                          {value}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-            </ChartCard>
+              );
+            })()}
           </div>
 
           {/* Row 2: Family Distribution + Top Jurisdictions */}
