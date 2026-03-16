@@ -48,6 +48,12 @@ const Sidebar = () => {
       icon: BarChart3,
       visible: hasRole('ANALYST') || hasRole('ADMIN')
     },
+    {   
+  name: "Status Dashboard", 
+  path: "/status-dashboard", 
+  icon: Activity,
+  visible: hasRole('ANALYST') || hasRole('ADMIN')
+    },
     { 
       name: "Analyst Requests", 
       path: "/admin/analyst-requests", 

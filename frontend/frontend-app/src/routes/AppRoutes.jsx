@@ -20,6 +20,7 @@ import UpdatePassword from "../Pages/UpdatePassword.jsx";
 import OAuth2Success from "../Pages/OAuth2Success";
 
 import SearchPage from "../Pages/SearchPage";
+import StatusDashboard from "../Pages/StatusDashboard";
 
 const AppRoutes = () => {
   return (
@@ -148,6 +149,14 @@ const AppRoutes = () => {
         }
       />
 
+       <Route
+  path="/status-dashboard"
+  element={
+    <ProtectedRoute >
+      <StatusDashboard />
+    </ProtectedRoute>
+  }
+/>
       <Route path="*" element={<div>404 - Page Not Found</div>} />
     </Routes>
   );
