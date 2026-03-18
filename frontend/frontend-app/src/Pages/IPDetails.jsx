@@ -4,9 +4,10 @@ import axios from "axios";
 import {
   FileText, Shield, Globe, Calendar, Star,
   Download, Activity, ArrowLeft, ExternalLink, Lock,
-  Loader2, AlertTriangle
+  Loader2, AlertTriangle, Bell, BellOff, Plus, Clock
 } from "lucide-react";
 import DashboardLayout from "../components/layouts/DashboardLayout";
+import { useAuth } from "../context/AuthContext";
 
 const API_BASE_URL = "http://localhost:8080/api";
 
@@ -26,7 +27,69 @@ const IPDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [bookmarked, setBookmarked] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+  const [subLoading, setSubLoading] = useState(false);
 
+  // Filing tracker state
+  const [filings, setFilings] = useState([]);
+  const [loadingFilings, setLoadingFilings] = useState(false);
+  const [showAddFilingModal, setShowAddFilingModal] = useState(false);
+  const [newFiling, setNewFiling] = useState({ status: "", description: "", date: "" });
+  const [submittingFiling, setSubmittingFiling] = useState(false);
+  const { user, hasRole } = useAuth();
+
+  // Fetch filings when tab becomes active
+  const fetchFilings = async () => {
+    if (!id) return;
+    setLoadingFilings(true);
+    try {
+      const assetType = type === "patent" ? "PATENT" : "TRADEMARK";
+      const response = await axios.get(
+        `${API_BASE_URL}/ip/filings/${assetType}/${id}`,
+        { headers: getAuthHeader() }
+      );
+      setFilings(response.data);
+    } catch (err) {
+      console.error("Failed to fetch filings:", err);
+    } finally {
+      setLoadingFilings(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "filings") {
+      fetchFilings();
+    }
+  }, [activeTab]);
+
+  const handleAddFiling = async (e) => {
+    e.preventDefault();
+    setSubmittingFiling(true);
+    try {
+      const assetType = type === "patent" ? "PATENT" : "TRADEMARK";
+      await axios.post(
+        `${API_BASE_URL}/ip/filings`,
+        {
+          assetType,
+          assetId: id,
+          status: newFiling.status,
+          description: newFiling.description,
+          date: newFiling.date || null,
+        },
+        { headers: getAuthHeader() }
+      );
+      setShowAddFilingModal(false);
+      setNewFiling({ status: "", description: "", date: "" });
+      fetchFilings(); // refresh list
+    } catch (err) {
+      console.error("Failed to add filing:", err);
+      alert("Error adding filing. Check console.");
+    } finally {
+      setSubmittingFiling(false);
+    }
+  };
+
+  // Fetch asset details
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -51,6 +114,26 @@ const IPDetailPage = () => {
     };
     fetchData();
   }, [id, type]);
+
+  // Fetch subscription status
+  useEffect(() => {
+    const checkSubscription = async () => {
+      if (!id) return;
+      try {
+        const assetType = type === "patent" ? "PATENT" : "TRADEMARK";
+        const response = await axios.get(
+          `${API_BASE_URL}/ip/subscriptions/${assetType}/${id}`,
+          { headers: getAuthHeader() }
+        );
+        setSubscribed(response.data.subscribed);
+      } catch (err) {
+        console.error("Failed to check subscription:", err);
+      }
+    };
+    if (!loading && data) {
+      checkSubscription();
+    }
+  }, [loading, data, id, type]);
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "N/A";
@@ -103,6 +186,31 @@ const IPDetailPage = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleSubscribe = async () => {
+    setSubLoading(true);
+    try {
+      const assetType = type === "patent" ? "PATENT" : "TRADEMARK";
+      if (subscribed) {
+        await axios.delete(`${API_BASE_URL}/ip/subscriptions/${assetType}/${id}`, {
+          headers: getAuthHeader()
+        });
+        setSubscribed(false);
+      } else {
+        await axios.post(
+          `${API_BASE_URL}/ip/subscriptions`,
+          { type: assetType, assetId: id },
+          { headers: getAuthHeader() }
+        );
+        setSubscribed(true);
+      }
+    } catch (err) {
+      console.error("Subscription action failed:", err);
+      alert("Failed to update subscription. Please try again.");
+    } finally {
+      setSubLoading(false);
+    }
   };
 
   if (loading) {
@@ -190,6 +298,27 @@ const IPDetailPage = () => {
               </div>
               <div className="flex gap-3">
                 <button
+                  onClick={handleSubscribe}
+                  disabled={subLoading}
+                  className={`p-3 rounded-xl transition-all flex items-center gap-2 ${
+                    subscribed
+                      ? "bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30"
+                      : "bg-slate-800 border border-slate-700 hover:border-slate-500 text-slate-300"
+                  }`}
+                  title={subscribed ? "Unsubscribe from alerts" : "Subscribe to alerts"}
+                >
+                  {subLoading ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : subscribed ? (
+                    <Bell size={20} className="fill-amber-400 text-amber-400" />
+                  ) : (
+                    <BellOff size={20} />
+                  )}
+                  <span className="text-xs font-medium hidden md:inline">
+                    {subscribed ? "Subscribed" : "Subscribe"}
+                  </span>
+                </button>
+                <button
                   onClick={() => setBookmarked(!bookmarked)}
                   className="p-3 bg-slate-800 border border-slate-700 rounded-xl hover:border-slate-500 transition-all"
                 >
@@ -222,12 +351,13 @@ const IPDetailPage = () => {
             <div className="col-span-12 lg:col-span-8 space-y-6">
               <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
                 <nav className="flex bg-slate-900/50 border-b border-slate-800 px-4 flex-wrap">
-                  {["overview", "claims", "legal info"].map((tab) => (
+                  {["overview", "claims", "legal info", "filings"].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`px-6 py-5 text-[10px] font-black uppercase tracking-widest transition-all relative ${activeTab === tab ? "text-blue-500" : "text-slate-500 hover:text-slate-200"
-                        }`}
+                      className={`px-6 py-5 text-[10px] font-black uppercase tracking-widest transition-all relative ${
+                        activeTab === tab ? "text-blue-500" : "text-slate-500 hover:text-slate-200"
+                      }`}
                     >
                       {tab}
                       {activeTab === tab && (
@@ -354,6 +484,59 @@ const IPDetailPage = () => {
                         ))}
                     </div>
                   )}
+
+                  {/* FILINGS TAB CONTENT */}
+                  {activeTab === "filings" && (
+                    <div className="space-y-4 animate-in fade-in">
+                      {/* Header with add button (only for analysts/admins) */}
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-white font-bold flex items-center gap-2">
+                          <Calendar size={16} className="text-blue-500" /> Filing Timeline
+                        </h3>
+                        {(hasRole('ANALYST') || hasRole('ADMIN')) && (
+                          <button
+                            onClick={() => setShowAddFilingModal(true)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-blue-600/20 border border-blue-500/30 rounded-lg text-blue-400 text-xs font-semibold hover:bg-blue-600/30 transition"
+                          >
+                            <Plus size={14} /> Add Filing
+                          </button>
+                        )}
+                      </div>
+
+                      {loadingFilings ? (
+                        <div className="flex justify-center py-8">
+                          <Loader2 size={24} className="animate-spin text-blue-500" />
+                        </div>
+                      ) : filings.length === 0 ? (
+                        <p className="text-slate-500 italic py-8 text-center">
+                          No filings recorded for this asset.
+                        </p>
+                      ) : (
+                        <div className="space-y-4">
+                          {filings.map((filing, idx) => (
+                            <div key={filing.id || idx} className="relative pl-6 pb-4 border-l-2 border-slate-700 last:pb-0">
+                              <div className="absolute left-[-5px] top-0 w-2 h-2 rounded-full bg-blue-500" />
+                              <div className="flex items-start gap-3">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">
+                                      {filing.status}
+                                    </span>
+                                    <span className="text-xs text-slate-500 flex items-center gap-1">
+                                      <Clock size={10} /> {new Date(filing.date).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  {filing.description && (
+                                    <p className="text-sm text-slate-400">{filing.description}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -404,6 +587,74 @@ const IPDetailPage = () => {
             </aside>
           </div>
         </div>
+
+        {/* Add Filing Modal */}
+        {showAddFilingModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl w-full max-w-md shadow-2xl">
+              <form onSubmit={handleAddFiling}>
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Add New Filing</h3>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Status <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newFiling.status}
+                      onChange={(e) => setNewFiling({ ...newFiling, status: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g. Application, Granted, Renewal, Expiry"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      value={newFiling.description}
+                      onChange={(e) => setNewFiling({ ...newFiling, description: e.target.value })}
+                      rows={3}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      placeholder="Optional details"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Date (optional, defaults to now)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={newFiling.date}
+                      onChange={(e) => setNewFiling({ ...newFiling, date: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddFilingModal(false)}
+                    className="px-4 py-2 border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingFiling}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm flex items-center gap-2"
+                  >
+                    {submittingFiling ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                    Add Filing
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </DashboardLayout>
     );
   }
@@ -447,21 +698,42 @@ const IPDetailPage = () => {
               )}
             </div>
             <div className="flex gap-3">
-                <button
-                  onClick={() => setBookmarked(!bookmarked)}
-                  className="p-3 bg-slate-800 border border-slate-700 rounded-xl hover:border-slate-500 transition-all"
-                >
-                  <Star
-                    size={20}
-                    className={bookmarked ? "fill-amber-400 text-amber-400" : "text-slate-400"}
-                  />
-                </button>
-                <button 
-                  onClick={handleExport}
-                  className="flex items-center gap-3 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-all"
-                >
-                  <Download size={18} /> Export Data
-                </button>
+              <button
+                onClick={handleSubscribe}
+                disabled={subLoading}
+                className={`p-3 rounded-xl transition-all flex items-center gap-2 ${
+                  subscribed
+                    ? "bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30"
+                    : "bg-slate-800 border border-slate-700 hover:border-slate-500 text-slate-300"
+                }`}
+                title={subscribed ? "Unsubscribe from alerts" : "Subscribe to alerts"}
+              >
+                {subLoading ? (
+                  <Loader2 size={20} className="animate-spin" />
+                ) : subscribed ? (
+                  <Bell size={20} className="fill-amber-400 text-amber-400" />
+                ) : (
+                  <BellOff size={20} />
+                )}
+                <span className="text-xs font-medium hidden md:inline">
+                  {subscribed ? "Subscribed" : "Subscribe"}
+                </span>
+              </button>
+              <button
+                onClick={() => setBookmarked(!bookmarked)}
+                className="p-3 bg-slate-800 border border-slate-700 rounded-xl hover:border-slate-500 transition-all"
+              >
+                <Star
+                  size={20}
+                  className={bookmarked ? "fill-amber-400 text-amber-400" : "text-slate-400"}
+                />
+              </button>
+              <button 
+                onClick={handleExport}
+                className="flex items-center gap-3 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-all"
+              >
+                <Download size={18} /> Export Data
+              </button>
             </div>
           </div>
         </header>
@@ -507,6 +779,74 @@ const IPDetailPage = () => {
             )}
           </div>
         </div>
+
+        {/* Add Filing Modal for trademark (same as patent) */}
+        {showAddFilingModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl w-full max-w-md shadow-2xl">
+              <form onSubmit={handleAddFiling}>
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Add New Filing</h3>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Status <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newFiling.status}
+                      onChange={(e) => setNewFiling({ ...newFiling, status: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g. Application, Granted, Renewal, Expiry"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      value={newFiling.description}
+                      onChange={(e) => setNewFiling({ ...newFiling, description: e.target.value })}
+                      rows={3}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      placeholder="Optional details"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Date (optional, defaults to now)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={newFiling.date}
+                      onChange={(e) => setNewFiling({ ...newFiling, date: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddFilingModal(false)}
+                    className="px-4 py-2 border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingFiling}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm flex items-center gap-2"
+                  >
+                    {submittingFiling ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                    Add Filing
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

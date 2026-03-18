@@ -5,6 +5,8 @@ import com.example.globalipplatform.project.entity.Subscription;
 import com.example.globalipplatform.project.entity.Trademark;
 import com.example.globalipplatform.project.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,6 +14,9 @@ import java.util.Optional;
 
 @Repository
 public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
+
+    @Query("SELECT s FROM Subscription s LEFT JOIN FETCH s.patent LEFT JOIN FETCH s.trademark WHERE s.user = :user")
+    List<Subscription> findByUserWithAssets(@Param("user") User user);
 
     List<Subscription> findByUser(User user);
 

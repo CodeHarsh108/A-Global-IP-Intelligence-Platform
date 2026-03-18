@@ -21,6 +21,7 @@ import OAuth2Success from "../Pages/OAuth2Success";
 
 import SearchPage from "../Pages/SearchPage";
 import StatusDashboard from "../Pages/StatusDashboard";
+import Subscriptions from "../Pages/Subscriptions.jsx";
 
 const AppRoutes = () => {
   return (
@@ -148,6 +149,19 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+
+        
+        <Route
+  path="/subscriptions"
+  element={
+    <ProtectedRoute>
+      <Subscriptions />
+    </ProtectedRoute>
+  }/>
+
+
+
 
        <Route
   path="/status-dashboard"

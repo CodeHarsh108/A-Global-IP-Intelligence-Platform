@@ -42,6 +42,12 @@ const Sidebar = () => {
       icon: Bell,
       visible: true 
     },
+        { 
+      name: "My Subscriptions", 
+      path: "/subscriptions", 
+      icon: Bell,
+      visible: true 
+    },
     { 
       name: "Analytics", 
       path: "/analytics", 
