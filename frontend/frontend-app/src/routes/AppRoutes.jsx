@@ -22,6 +22,9 @@ import OAuth2Success from "../Pages/OAuth2Success";
 import SearchPage from "../Pages/SearchPage";
 import StatusDashboard from "../Pages/StatusDashboard";
 import Subscriptions from "../Pages/Subscriptions.jsx";
+import ApiMonitoring from "../Pages/APIMonitoring.jsx";
+
+
 
 const AppRoutes = () => {
   return (
@@ -137,6 +140,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute role="ADMIN">
             <div><SystemLogs /></div>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/apihealth"
+        element={
+          <ProtectedRoute role="ADMIN">
+            <div><ApiMonitoring/></div>
           </ProtectedRoute>
         }
       />

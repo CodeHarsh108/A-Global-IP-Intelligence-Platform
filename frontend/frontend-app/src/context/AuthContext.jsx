@@ -215,19 +215,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const hasRole = (requiredRole) => {
-    if (!user) return false;
+  if (!user || !user.role) return false;
 
-    const roleHierarchy = {
-      'ADMIN': ['ADMIN', 'ANALYST', 'USER'],
-      'ANALYST': ['ANALYST', 'USER'],
-      'USER': ['USER']
-    };
-
-    const userRole = user.role;
-    const allowedRoles = roleHierarchy[userRole] || [];
-
-    return allowedRoles.includes(requiredRole.toUpperCase());
-  };
+  // This performs a strict 1:1 match
+  return user.role.toUpperCase() === requiredRole.toUpperCase();
+};
 
   const getDashboardPath = () => {
     if (!user) return "/login";
