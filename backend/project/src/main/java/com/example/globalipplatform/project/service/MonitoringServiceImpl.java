@@ -13,7 +13,6 @@ import com.example.globalipplatform.project.repository.SubscriptionRepository;
 import com.example.globalipplatform.project.repository.TrademarkRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -103,8 +102,8 @@ public class MonitoringServiceImpl implements MonitoringService {
 
     @Override
     public List<Subscription> listSubscriptions(User user) {
-        return subscriptionRepository.findByUser(user);
-    }
+    return subscriptionRepository.findByUserWithAssets(user);
+}
 
     @Override
     @Transactional
