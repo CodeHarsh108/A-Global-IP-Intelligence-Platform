@@ -21,66 +21,64 @@ const Sidebar = () => {
   const { logout, user, hasRole } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
-  // Improved Menu Logic: 'Search' is now hidden for 'USER' role
   const menuItems = [
-    { 
-      name: "Dashboard", 
-      path: `/${user?.role?.toLowerCase()}-dashboard`, 
+    {
+      name: "Dashboard",
+      path: `/${user?.role?.toLowerCase()}-dashboard`,
       icon: LayoutDashboard,
-      visible: true 
+      visible: true
     },
-    { 
-      name: "Search", 
-      path: "/search", 
+    {
+      name: "Search",
+      path: "/search",
       icon: Search,
-      // Only Admins and Analysts see the dedicated Search page link
-      visible: hasRole('ADMIN') || hasRole('ANALYST') 
+      visible: hasRole('ANALYST')
     },
-    { 
-      name: "Alerts", 
-      path: "/alerts", 
+    {
+      name: "Alerts",
+      path: "/alerts",
       icon: Bell,
-      visible: true 
+      visible: true
     },
-        { 
-      name: "My Subscriptions", 
-      path: "/subscriptions", 
+    {
+      name: "My Subscriptions",
+      path: "/subscriptions",
       icon: Bell,
-      visible: true 
+      visible: hasRole('ANALYST') || hasRole('USER')
     },
-    { 
-      name: "Analytics", 
-      path: "/analytics", 
+    {
+      name: "Analytics",
+      path: "/analytics",
       icon: BarChart3,
-      visible: hasRole('ANALYST') || hasRole('ADMIN')
+      visible: hasRole('ANALYST')
     },
-    {   
-  name: "Status Dashboard", 
-  path: "/status-dashboard", 
-  icon: Activity,
-  visible: hasRole('ANALYST') || hasRole('ADMIN')
+    {
+      name: "Status Dashboard",
+      path: "/status-dashboard",
+      icon: Activity,
+      visible: hasRole('ANALYST') || hasRole('USER')
     },
-    { 
-      name: "Analyst Requests", 
-      path: "/admin/analyst-requests", 
+    {
+      name: "Analyst Requests",
+      path: "/admin/analyst-requests",
       icon: FileText,
       visible: hasRole('ADMIN')
     },
-    { 
-      name: "User Management", 
-      path: "/admin/users", 
+    {
+      name: "User Management",
+      path: "/admin/users",
       icon: Users,
       visible: hasRole('ADMIN')
     },
-    { 
-      name: "System Logs", 
-      path: "/admin/logs", 
+    {
+      name: "System Logs",
+      path: "/admin/logs",
       icon: FileText,
       visible: hasRole('ADMIN')
     },
-    { 
-      name: "Activity", 
-      path: "/admin/activity", 
+    {
+      name: "API Health",
+      path: "/admin/apihealth",
       icon: Activity,
       visible: hasRole('ADMIN')
     }
@@ -93,9 +91,8 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`h-screen ${
-        collapsed ? "w-20" : "w-72"
-      } transition-all duration-300 bg-[#020617] border-r border-slate-900 flex flex-col z-50`}
+      className={`h-screen ${collapsed ? "w-20" : "w-72"
+        } transition-all duration-300 bg-[#020617] border-r border-slate-900 flex flex-col z-50`}
     >
       {/* BRANDING SECTION */}
       <div className="flex items-center justify-between p-6">
@@ -157,17 +154,17 @@ const Sidebar = () => {
                 key={index}
                 to={item.path}
                 className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-200 relative group
-                  ${isActive 
-                    ? "bg-blue-600/10 border border-blue-500/20 text-white shadow-[0_0_15px_rgba(59,130,246,0.05)]" 
+                  ${isActive
+                    ? "bg-blue-600/10 border border-blue-500/20 text-white shadow-[0_0_15px_rgba(59,130,246,0.05)]"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
                   }`}
               >
                 {isActive && (
                   <div className="absolute left-[-4px] h-5 w-1 bg-blue-500 rounded-full shadow-[0_0_8px_#3b82f6]" />
                 )}
-                
+
                 <Icon size={20} className={isActive ? "text-blue-500" : "group-hover:text-blue-400 transition-colors"} />
-                
+
                 {!collapsed && (
                   <span className={`text-[13px] font-semibold ${isActive ? 'text-white' : 'text-slate-400'}`}>
                     {item.name}
