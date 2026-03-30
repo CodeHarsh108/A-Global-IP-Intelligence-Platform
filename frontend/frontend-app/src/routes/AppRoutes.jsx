@@ -24,7 +24,8 @@ import StatusDashboard from "../Pages/StatusDashboard";
 import Subscriptions from "../Pages/Subscriptions.jsx";
 import ApiMonitoring from "../Pages/APIMonitoring.jsx";
 
-
+// ✅ ADD THIS LINE
+import ApiLogs from "../Pages/ApiLogs.jsx";
 
 const AppRoutes = () => {
   return (
@@ -38,7 +39,6 @@ const AppRoutes = () => {
       <Route path="/register/user" element={<Register />} />
       <Route path="/register/analyst" element={<AnalystRegistration />} />
 
-
       {/* Protected Routes */}
       <Route
         path="/profile"
@@ -48,6 +48,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/profile/edit"
         element={
@@ -56,6 +57,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/profile/update-password"
         element={
@@ -64,6 +66,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/search"
         element={
@@ -72,6 +75,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/ip/:id"
         element={
@@ -80,6 +84,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/alerts"
         element={
@@ -130,7 +135,7 @@ const AppRoutes = () => {
         path="/admin/users"
         element={
           <ProtectedRoute role="ADMIN">
-            <div><UserLogs /></div>
+            <UserLogs />
           </ProtectedRoute>
         }
       />
@@ -139,15 +144,26 @@ const AppRoutes = () => {
         path="/admin/logs"
         element={
           <ProtectedRoute role="ADMIN">
-            <div><SystemLogs /></div>
+            <SystemLogs />
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/admin/apihealth"
         element={
           <ProtectedRoute role="ADMIN">
-            <div><ApiMonitoring/></div>
+            <ApiMonitoring />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ✅ NEW API LOGS ROUTE */}
+      <Route
+        path="/admin/apilogs"
+        element={
+          <ProtectedRoute role="ADMIN">
+            <ApiLogs />
           </ProtectedRoute>
         }
       />
@@ -161,30 +177,27 @@ const AppRoutes = () => {
         }
       />
 
+      <Route
+        path="/subscriptions"
+        element={
+          <ProtectedRoute>
+            <Subscriptions />
+          </ProtectedRoute>
+        }
+      />
 
-        
-        <Route
-  path="/subscriptions"
-  element={
-    <ProtectedRoute>
-      <Subscriptions />
-    </ProtectedRoute>
-  }/>
+      <Route
+        path="/status-dashboard"
+        element={
+          <ProtectedRoute>
+            <StatusDashboard />
+          </ProtectedRoute>
+        }
+      />
 
-
-
-
-       <Route
-  path="/status-dashboard"
-  element={
-    <ProtectedRoute >
-      <StatusDashboard />
-    </ProtectedRoute>
-  }
-/>
       <Route path="*" element={<div>404 - Page Not Found</div>} />
     </Routes>
   );
 };
 
-export default AppRoutes;   
+export default AppRoutes;
