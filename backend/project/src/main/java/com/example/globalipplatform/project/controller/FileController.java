@@ -39,16 +39,16 @@ public class FileController {
 
             String filePath = null;
             switch (documentType) {
-                case "patentLicense":
+                case "patentAgentLicense":
                     filePath = request.getPatentAgentLicensePath();
                     break;
-                case "lawCouncil":
+                case "lawCouncilId":
                     filePath = request.getLawCouncilIdPath();
                     break;
                 case "companyProof":
                     filePath = request.getCompanyProofPath();
                     break;
-                case "researchProof":
+                case "researchInstitutionProof":
                     filePath = request.getResearchInstitutionProofPath();
                     break;
                 default:
@@ -88,16 +88,16 @@ public class FileController {
 
             String filePath = null;
             switch (documentType) {
-                case "patentLicense":
+                case "patentAgentLicense":
                     filePath = request.getPatentAgentLicensePath();
                     break;
-                case "lawCouncil":
+                case "lawCouncilId":
                     filePath = request.getLawCouncilIdPath();
                     break;
                 case "companyProof":
                     filePath = request.getCompanyProofPath();
                     break;
-                case "researchProof":
+                case "researchInstitutionProof":
                     filePath = request.getResearchInstitutionProofPath();
                     break;
                 default:

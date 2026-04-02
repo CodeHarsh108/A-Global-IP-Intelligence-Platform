@@ -64,12 +64,7 @@ const Sidebar = () => {
       icon: FileText,
       visible: hasRole('ADMIN')
     },
-    {
-      name: "User Management",
-      path: "/admin/users",
-      icon: Users,
-      visible: hasRole('ADMIN')
-    },
+    
     {
       name: "System Logs",
       path: "/admin/logs",
@@ -85,9 +80,11 @@ const Sidebar = () => {
   ];
 
   const handleLogout = () => {
+  if (window.confirm("Are you sure you want to log out?")) {
     logout();
     navigate("/");
-  };
+  }
+};
 
   return (
     <div

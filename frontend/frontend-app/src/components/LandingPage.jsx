@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-
+import { useAuth } from "../context/AuthContext"; // adjust path if needed
 import {
   Search,
   BarChart3,
@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 
 const LandingPage = () => {
+  const { isAuthenticated, getDashboardPath } = useAuth();
+
   return (
     <div className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
 
@@ -25,22 +27,28 @@ const LandingPage = () => {
 
           <nav className="hidden md:flex gap-8 text-sm font-medium">
             <a href="#features" className="hover:text-blue-600 transition">Features</a>
-            <a href="#platform" className="hover:text-blue-600 transition">Platform</a>
+            <Link
+              to={isAuthenticated ? getDashboardPath() : "/register"}
+              className="hover:text-blue-600 transition"
+            >
+              Platform
+            </Link>
             <a href="#usecases" className="hover:text-blue-600 transition">Use Cases</a>
           </nav>
 
-          <div className="hidden md:flex gap-4 ">
-            <Link to="/login" className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm">
+          <div className="hidden md:flex gap-4">
+            <Link
+              to="/login"
+              className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
+            >
               Login
             </Link>
-
             <Link
               to="/register"
               className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
             >
               Get Started
             </Link>
-
           </div>
 
         </div>
@@ -64,14 +72,7 @@ const LandingPage = () => {
             track legal status changes, and visualize IP landscapes — all in one unified platform.
           </p>
 
-          <div className="flex justify-center gap-6 flex-wrap">
-            <button className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2">
-              Explore Platform <ArrowRight size={18} />
-            </button>
-            <button className="px-8 py-3 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-              Request Demo
-            </button>
-          </div>
+          
 
         </div>
       </section>
@@ -79,7 +80,6 @@ const LandingPage = () => {
       {/* ================= STATS SECTION ================= */}
       <section className="py-20 px-6 bg-white dark:bg-gray-950">
         <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-10 text-center">
-
           {[
             { value: "100+", label: "Global Jurisdictions" },
             { value: "1M+", label: "Patent Records Indexed" },
@@ -91,7 +91,6 @@ const LandingPage = () => {
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{stat.label}</p>
             </div>
           ))}
-
         </div>
       </section>
 
@@ -105,7 +104,6 @@ const LandingPage = () => {
         </div>
 
         <div className="grid md:grid-cols-3 gap-10 max-w-6xl mx-auto">
-
           {[
             {
               icon: <Search size={28} />,
@@ -147,7 +145,6 @@ const LandingPage = () => {
               <p className="text-sm text-gray-600 dark:text-gray-400">{feature.desc}</p>
             </div>
           ))}
-
         </div>
       </section>
 
@@ -155,50 +152,41 @@ const LandingPage = () => {
       <section id="usecases" className="py-24 px-6">
         <div className="max-w-5xl mx-auto text-center">
           <h3 className="text-4xl font-bold mb-6">Who Benefits?</h3>
-
           <div className="grid md:grid-cols-3 gap-10 text-left mt-12">
-
             <div>
               <h4 className="font-semibold text-lg mb-2">Innovators & Startups</h4>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Protect inventions and monitor competitive patent landscapes.
               </p>
             </div>
-
             <div>
               <h4 className="font-semibold text-lg mb-2">Law Firms</h4>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Conduct structured patent research and track legal developments.
               </p>
             </div>
-
             <div>
               <h4 className="font-semibold text-lg mb-2">R&D Teams</h4>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Identify technology trends and strategic innovation opportunities.
               </p>
             </div>
-
           </div>
         </div>
       </section>
 
       {/* ================= FINAL CTA ================= */}
-        <section className="py-24 bg-gray-50 dark:bg-gray-900 text-center px-6">
+      <section className="py-24 bg-gray-50 dark:bg-gray-900 text-center px-6">
         <div className="max-w-4xl mx-auto">
-            <h3 className="text-4xl font-bold mb-6">
-            Ready to Unlock Global IP Insights?
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-8">
+          <h3 className="text-4xl font-bold mb-6">Ready to Unlock Global IP Insights?</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-8">
             Start monitoring patents, trademarks, and competitor filings in real time.
-            </p>
-            <button className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+          </p>
+          <button className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" onClick={() => window.location.href = isAuthenticated ? getDashboardPath() : "/register"}>
             Get Started Today
-            </button>
+          </button>
         </div>
-        </section>
-
-
+      </section>
 
       {/* ================= FOOTER ================= */}
       <footer className="py-10 text-center border-t border-gray-200 dark:border-gray-800">

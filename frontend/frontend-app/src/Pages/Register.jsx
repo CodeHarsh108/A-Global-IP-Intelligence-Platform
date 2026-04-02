@@ -357,25 +357,7 @@ const Register = () => {
             )}
           </div>
 
-          {/* Role Selection */}
-          <div>
-            <label htmlFor="role" className="block text-sm font-medium mb-2 text-gray-600 dark:text-gray-300">
-              Account Type
-            </label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white"
-              disabled={loading}
-            >
-              <option value="USER">👤 Regular User</option>
-            </select>
-            <p className="text-xs text-gray-400 mt-1">
-            </p>
-          </div>
-
+         
           {/* Submit Button */}
           <button
             type="submit"

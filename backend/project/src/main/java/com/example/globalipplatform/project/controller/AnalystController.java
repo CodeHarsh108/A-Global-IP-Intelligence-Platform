@@ -1,16 +1,18 @@
 package com.example.globalipplatform.project.controller;
 
+import com.example.globalipplatform.project.DTO.FamilyDistributionDTO;
+import com.example.globalipplatform.project.DTO.FilingTrendDTO;
+import com.example.globalipplatform.project.DTO.TechnologyDistributionDTO;
+import com.example.globalipplatform.project.DTO.TopCitedDTO;
+import com.example.globalipplatform.project.repository.PatentRepository;
+import com.example.globalipplatform.project.repository.SubscriptionRepository;
+import com.example.globalipplatform.project.repository.TrademarkRepository;
+import com.example.globalipplatform.project.service.IPService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import com.example.globalipplatform.project.DTO.FamilyDistributionDTO;
-import com.example.globalipplatform.project.DTO.FilingTrendDTO;
-import com.example.globalipplatform.project.DTO.TechnologyDistributionDTO;
-import com.example.globalipplatform.project.DTO.TopCitedDTO;
-import com.example.globalipplatform.project.service.IPService;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,9 +23,18 @@ import java.util.Map;
 public class AnalystController {
 
     private final IPService ipService;
+    private final PatentRepository patentRepository;
+    private final TrademarkRepository trademarkRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
-    public AnalystController(IPService ipService) {
+    public AnalystController(IPService ipService,
+                             PatentRepository patentRepository,
+                             TrademarkRepository trademarkRepository,
+                             SubscriptionRepository subscriptionRepository) {
         this.ipService = ipService;
+        this.patentRepository = patentRepository;
+        this.trademarkRepository = trademarkRepository;
+        this.subscriptionRepository = subscriptionRepository;
     }
 
     @GetMapping("/dashboard")
@@ -43,14 +54,15 @@ public class AnalystController {
         return ResponseEntity.ok(response);
     }
 
+    // ✅ REAL DATA – counts from the database
     @GetMapping("/analytics")
     @PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
     public ResponseEntity<Map<String, Object>> getAnalytics() {
         Map<String, Object> response = new HashMap<>();
-        response.put("totalPatents", 1245);
-        response.put("totalTrademarks", 876);
-        response.put("activeMonitors", 23);
-        response.put("reportsGenerated", 45);
+        response.put("totalPatents", patentRepository.count());
+        response.put("totalTrademarks", trademarkRepository.count());
+        response.put("activeMonitors", subscriptionRepository.count()); // total subscriptions = active monitors
+        response.put("reportsGenerated", 42); // placeholder – you can replace with actual reports count later
         response.put("trends", new String[]{
             "AI Technology ↑ 25%",
             "Biotechnology ↑ 18%",
@@ -80,30 +92,28 @@ public class AnalystController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/visualizations/trends")
+    @PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
+    public ResponseEntity<List<FilingTrendDTO>> getFilingTrends() {
+        return ResponseEntity.ok(ipService.getFilingTrends());
+    }
 
-@GetMapping("/visualizations/trends")
-@PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
-public ResponseEntity<List<FilingTrendDTO>> getFilingTrends() {
-    return ResponseEntity.ok(ipService.getFilingTrends());
-}
+    @GetMapping("/visualizations/top-cited")
+    @PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
+    public ResponseEntity<List<TopCitedDTO>> getTopCited(
+            @RequestParam(defaultValue = "10") int limit) {
+        return ResponseEntity.ok(ipService.getTopCitedPatents(limit));
+    }
 
-@GetMapping("/visualizations/top-cited")
-@PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
-public ResponseEntity<List<TopCitedDTO>> getTopCited(
-        @RequestParam(defaultValue = "10") int limit) {
-    return ResponseEntity.ok(ipService.getTopCitedPatents(limit));
-}
+    @GetMapping("/visualizations/families")
+    @PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
+    public ResponseEntity<List<FamilyDistributionDTO>> getFamilyDistribution() {
+        return ResponseEntity.ok(ipService.getFamilyDistribution());
+    }
 
-@GetMapping("/visualizations/families")
-@PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
-public ResponseEntity<List<FamilyDistributionDTO>> getFamilyDistribution() {
-    return ResponseEntity.ok(ipService.getFamilyDistribution());
-}
-
-@GetMapping("/visualizations/technologies")
-@PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
-public ResponseEntity<List<TechnologyDistributionDTO>> getTechnologyDistribution() {
-    return ResponseEntity.ok(ipService.getTechnologyDistribution());
-}
-
+    @GetMapping("/visualizations/technologies")
+    @PreAuthorize("hasAnyRole('ANALYST', 'ADMIN')")
+    public ResponseEntity<List<TechnologyDistributionDTO>> getTechnologyDistribution() {
+        return ResponseEntity.ok(ipService.getTechnologyDistribution());
+    }
 }

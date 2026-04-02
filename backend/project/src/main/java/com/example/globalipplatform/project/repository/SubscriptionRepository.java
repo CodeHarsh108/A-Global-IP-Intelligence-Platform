@@ -4,6 +4,7 @@ import com.example.globalipplatform.project.entity.Patent;
 import com.example.globalipplatform.project.entity.Subscription;
 import com.example.globalipplatform.project.entity.Trademark;
 import com.example.globalipplatform.project.entity.User;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,5 +32,9 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     List<Subscription> findByPatent(Patent patent);
 
     List<Subscription> findByTrademark(Trademark trademark);
-}
 
+    long countByUser(User user);
+
+    @Query("SELECT s FROM Subscription s WHERE s.user = :user ORDER BY s.created_at DESC")
+    List<Subscription> findTop10ByUserOrderByCreatedAtDesc(@Param("user") User user, Pageable pageable);
+}

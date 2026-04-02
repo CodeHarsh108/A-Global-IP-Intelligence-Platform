@@ -27,6 +27,7 @@ const IPDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [bookmarked, setBookmarked] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [subLoading, setSubLoading] = useState(false);
 
@@ -61,6 +62,26 @@ const IPDetailPage = () => {
       fetchFilings();
     }
   }, [activeTab]);
+
+  // Check if asset is saved (bookmarked)
+  useEffect(() => {
+    const checkSaved = async () => {
+      if (!id) return;
+      try {
+        const assetType = type === "patent" ? "PATENT" : "TRADEMARK";
+        const response = await axios.get(
+          `${API_BASE_URL}/ip/assets/saved/${assetType}/${id}`,
+          { headers: getAuthHeader() }
+        );
+        setBookmarked(response.data.saved);
+      } catch (err) {
+        console.error("Failed to check saved status:", err);
+      }
+    };
+    if (!loading && data) {
+      checkSaved();
+    }
+  }, [loading, data, id, type]);
 
   const handleAddFiling = async (e) => {
     e.preventDefault();
@@ -186,6 +207,30 @@ const IPDetailPage = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const assetType = type === "patent" ? "PATENT" : "TRADEMARK";
+      if (bookmarked) {
+        await axios.delete(`${API_BASE_URL}/ip/assets/save/${assetType}/${id}`, {
+          headers: getAuthHeader()
+        });
+        setBookmarked(false);
+      } else {
+        await axios.post(`${API_BASE_URL}/ip/assets/save`,
+          { type: assetType, assetId: id },
+          { headers: getAuthHeader() }
+        );
+        setBookmarked(true);
+      }
+    } catch (err) {
+      console.error("Failed to save/unsave asset:", err);
+      alert("Could not update saved status. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSubscribe = async () => {
@@ -319,15 +364,20 @@ const IPDetailPage = () => {
                   </span>
                 </button>
                 <button
-                  onClick={() => setBookmarked(!bookmarked)}
+                  onClick={handleSave}
+                  disabled={saving}
                   className="p-3 bg-slate-800 border border-slate-700 rounded-xl hover:border-slate-500 transition-all"
                 >
-                  <Star
-                    size={20}
-                    className={bookmarked ? "fill-amber-400 text-amber-400" : "text-slate-400"}
-                  />
+                  {saving ? (
+                    <Loader2 size={20} className="animate-spin text-slate-400" />
+                  ) : (
+                    <Star
+                      size={20}
+                      className={bookmarked ? "fill-amber-400 text-amber-400" : "text-slate-400"}
+                    />
+                  )}
                 </button>
-                <button 
+                <button
                   onClick={handleExport}
                   className="flex items-center gap-3 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-all"
                 >
@@ -488,7 +538,6 @@ const IPDetailPage = () => {
                   {/* FILINGS TAB CONTENT */}
                   {activeTab === "filings" && (
                     <div className="space-y-4 animate-in fade-in">
-                      {/* Header with add button (only for analysts/admins) */}
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-white font-bold flex items-center gap-2">
                           <Calendar size={16} className="text-blue-500" /> Filing Timeline
@@ -720,15 +769,20 @@ const IPDetailPage = () => {
                 </span>
               </button>
               <button
-                onClick={() => setBookmarked(!bookmarked)}
+                onClick={handleSave}
+                disabled={saving}
                 className="p-3 bg-slate-800 border border-slate-700 rounded-xl hover:border-slate-500 transition-all"
               >
-                <Star
-                  size={20}
-                  className={bookmarked ? "fill-amber-400 text-amber-400" : "text-slate-400"}
-                />
+                {saving ? (
+                  <Loader2 size={20} className="animate-spin text-slate-400" />
+                ) : (
+                  <Star
+                    size={20}
+                    className={bookmarked ? "fill-amber-400 text-amber-400" : "text-slate-400"}
+                  />
+                )}
               </button>
-              <button 
+              <button
                 onClick={handleExport}
                 className="flex items-center gap-3 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-all"
               >

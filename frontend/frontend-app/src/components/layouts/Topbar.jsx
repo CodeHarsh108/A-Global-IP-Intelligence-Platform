@@ -62,12 +62,7 @@ const Topbar = () => {
       <div className="flex items-center gap-5">
         
         {/* Global Notifications */}
-        <button className="relative p-2 rounded-lg hover:bg-slate-900 transition-colors group">
-          <Bell className="text-slate-400 group-hover:text-blue-400 transition-colors" size={20} />
-          <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-blue-600 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-[#020617] shadow-lg">
-            3
-          </span>
-        </button>
+        
 
         {/* Divider */}
         <div className="h-8 w-[1px] bg-slate-800 mx-1" />
@@ -118,16 +113,18 @@ const Topbar = () => {
                 </button>
                 
                 <button
-                  onClick={() => {
-                    logout();
-                    setOpen(false);
-                    navigate("/");
-                  }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-rose-500 hover:bg-rose-500/5 flex items-center gap-3 transition-colors font-bold mt-1"
-                >
-                  <LogOut size={16} />
-                  Sign Out
-                </button>
+  onClick={() => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      logout();
+      setOpen(false);
+      navigate("/");
+    }
+  }}
+  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+>
+  <LogOut size={14} />
+  Logout
+</button>
               </div>
             </>
           )}

@@ -17,10 +17,14 @@ public class ApiLog {
     private int statusCode;
     private LocalDateTime timestamp;
 
+    
+
     // Getter for ID
     public Long getId() {
         return id;
     }
+
+   
 
     // Endpoint
     public String getEndpoint() {

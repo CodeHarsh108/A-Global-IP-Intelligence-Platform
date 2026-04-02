@@ -46,10 +46,22 @@ public class IpAssetController {
     public ResponseEntity<?> saveAsset(Authentication authentication, @RequestBody Map<String, Object> body) {
         Long userId = getCurrentUserId(authentication);
         String type = (String) body.get("type");
-        Number assetIdNum = (Number) body.get("assetId");
-        if (type == null || assetIdNum == null)
+        Object assetIdObj = body.get("assetId");
+        if (type == null || assetIdObj == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "type and assetId are required"));
-        long assetId = assetIdNum.longValue();
+        }
+        
+        long assetId;
+        if (assetIdObj instanceof Number) {
+            assetId = ((Number) assetIdObj).longValue();
+        } else {
+            try {
+                assetId = Long.parseLong(assetIdObj.toString());
+            } catch (NumberFormatException e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "assetId must be a number"));
+            }
+        }
+        
         try {
             SavedIpAssetItemDTO saved = ipAssetStorageService.save(userId, type, assetId);
             return ResponseEntity.status(HttpStatus.CREATED).body(saved);

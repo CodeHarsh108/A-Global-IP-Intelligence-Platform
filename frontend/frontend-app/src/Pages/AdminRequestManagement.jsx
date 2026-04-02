@@ -1,4 +1,3 @@
-// src/Pages/AdminRequestManagement.jsx
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "../components/layouts/DashboardLayout";
 import { CheckCircle, XCircle, Eye, Download, Loader2, FileText, Image, File } from "lucide-react";
@@ -12,12 +11,27 @@ const AdminRequestManagement = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedRequestForAction, setSelectedRequestForAction] = useState(null);
   const [actionType, setActionType] = useState(null); // 'approve' or 'reject'
+  const [stats, setStats] = useState({ pending: 0, approvedToday: 0, rejectedToday: 0 });
+
 
   const API_BASE_URL = "http://localhost:8080";
 
   useEffect(() => {
     fetchRequests();
+    fetchStats();
   }, []);
+
+  const fetchStats = async () => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    const response = await axios.get(`${API_BASE_URL}/api/admin/analyst-requests/stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setStats(response.data);
+  } catch (error) {
+    console.error("Failed to fetch stats:", error);
+  }
+};
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -32,7 +46,6 @@ const AdminRequestManagement = () => {
           },
         }
       );
-      
       console.log("Fetched requests:", response.data);
       setRequests(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
@@ -60,7 +73,6 @@ const AdminRequestManagement = () => {
           },
         }
       );
-      
       alert("✅ Request approved successfully! The analyst will receive an email.");
       fetchRequests();
     } catch (error) {
@@ -83,7 +95,7 @@ const AdminRequestManagement = () => {
         {
           requestId,
           approved: false,
-          rejectionReason: "Application rejected by admin", // Default reason
+          rejectionReason: "Application rejected by admin",
         },
         {
           headers: {
@@ -91,7 +103,6 @@ const AdminRequestManagement = () => {
           },
         }
       );
-      
       alert("❌ Request rejected successfully!");
       fetchRequests();
     } catch (error) {
@@ -172,69 +183,46 @@ const AdminRequestManagement = () => {
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        
-        {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Analyst Registration Requests
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Analyst Registration Requests</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
             Review and manage pending analyst registration requests
           </p>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
 
-        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
             <p className="text-sm text-gray-600 dark:text-gray-400">Pending Requests</p>
-            <p className="text-3xl font-bold text-yellow-600 mt-2">
-              {requests.length}
-            </p>
+            <p className="text-3xl font-bold text-yellow-600 mt-2">{stats.pending}</p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
             <p className="text-sm text-gray-600 dark:text-gray-400">Approved Today</p>
-            <p className="text-3xl font-bold text-green-600 mt-2">0</p>
+            <p className="text-3xl font-bold text-green-600 mt-2">{stats.approvedToday}</p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
             <p className="text-sm text-gray-600 dark:text-gray-400">Rejected Today</p>
-            <p className="text-3xl font-bold text-red-600 mt-2">0</p>
+            <p className="text-3xl font-bold text-red-600 mt-2">{stats.rejectedToday}</p>
           </div>
         </div>
 
-        {/* Requests Table */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Applicant
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Credential Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Credential Number
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Submitted
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Documents
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Applicant</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Credential Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Credential Number</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Submitted</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Documents</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -253,33 +241,23 @@ const AdminRequestManagement = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          {request.email}
-                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">{request.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          {getCredentialTypeLabel(request.credentialType)}
-                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">{getCredentialTypeLabel(request.credentialType)}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          {request.credentialNumber}
-                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">{request.credentialNumber}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          {formatDate(request.submittedAt)}
-                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">{formatDate(request.submittedAt)}</div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-2">
                           {getAvailableDocuments(request).map((doc, index) => (
                             <div key={index} className="flex items-center gap-2">
                               {getDocumentIcon(doc.type)}
-                              <span className="text-xs text-gray-600 dark:text-gray-400">
-                                {doc.name}
-                              </span>
+                              <span className="text-xs text-gray-600 dark:text-gray-400">{doc.name}</span>
                               <button
                                 onClick={() => viewDocument(request.id, doc.type)}
                                 className="p-1 text-blue-600 hover:bg-blue-50 rounded"
@@ -339,19 +317,18 @@ const AdminRequestManagement = () => {
                   {actionType === 'approve' ? 'Approve Application' : 'Reject Application'}
                 </h3>
               </div>
-              
               <div className="p-6">
                 <p className="text-gray-700 dark:text-gray-300">
-                  {actionType === 'approve' 
+                  {actionType === 'approve'
                     ? `Are you sure you want to approve ${selectedRequestForAction.firstName} ${selectedRequestForAction.lastName}'s request?`
                     : `Are you sure you want to reject ${selectedRequestForAction.firstName} ${selectedRequestForAction.lastName}'s request?`}
                 </p>
                 {actionType === 'reject' && (
                   <p className="text-sm text-gray-500 mt-2">
+                    The applicant will be notified via email.
                   </p>
                 )}
               </div>
-
               <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
                 <button
                   onClick={() => {
@@ -359,7 +336,7 @@ const AdminRequestManagement = () => {
                     setSelectedRequestForAction(null);
                     setActionType(null);
                   }}
-                  className="px-4 py-2 border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg"
+                  className="px-4 py-2 border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg text-cyan-50"
                 >
                   Cancel
                 </button>
@@ -373,8 +350,8 @@ const AdminRequestManagement = () => {
                   }}
                   disabled={processingId === selectedRequestForAction.id}
                   className={`px-4 py-2 rounded-lg text-white flex items-center gap-2 ${
-                    actionType === 'approve' 
-                      ? 'bg-green-600 hover:bg-green-700' 
+                    actionType === 'approve'
+                      ? 'bg-green-600 hover:bg-green-700'
                       : 'bg-red-600 hover:bg-red-700'
                   } disabled:opacity-50`}
                 >

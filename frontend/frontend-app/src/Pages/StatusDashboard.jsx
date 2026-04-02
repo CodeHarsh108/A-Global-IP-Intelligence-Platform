@@ -17,12 +17,28 @@ const STAGES = [
   { key: "expiry",      labels: ["Expired", "Lapsed", "Abandoned"],   color: "bg-red-500",    text: "text-red-600 dark:text-red-400",       badge: "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400",         icon: "⚠️", desc: "Lapsed or expired" },
 ];
 
-const getStageFromStatus = (status) => {
+// Improved stage mapping: considers filing/grant dates to move older assets to "renewal"
+const getStageFromStatus = (asset) => {
+  const status = asset?.status;
   if (!status) return "application";
   const s = status.toLowerCase().trim();
-  if (s === "granted" || s === "registered" || s === "active") return "granted";
-  if (s === "expired" || s === "lapsed" || s === "abandoned")  return "expiry";
-  if (s === "renewal" || s === "expiring")                     return "renewal";
+
+  // Explicit statuses
+  if (s === "granted" || s === "registered" || s === "active") {
+    // If granted more than 2 years ago → renewal due
+    if (asset.grantDate && new Date(asset.grantDate) < new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000)) {
+      return "renewal";
+    }
+    return "granted";
+  }
+  if (s === "expired" || s === "lapsed" || s === "abandoned") return "expiry";
+  if (s === "renewal" || s === "expiring") return "renewal";
+
+  // For pending applications older than 2 years → renewal due (awaiting renewal)
+  if (s === "pending" && asset.filingDate && new Date(asset.filingDate) < new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000)) {
+    return "renewal";
+  }
+
   return "application";
 };
 
@@ -73,7 +89,7 @@ const LifecycleStepper = ({ stage }) => {
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 const DetailModal = ({ asset, onClose }) => {
   if (!asset) return null;
-  const stage       = getStageFromStatus(asset.status);
+  const stage       = getStageFromStatus(asset);
   const stageConfig = getStageConfig(stage);
 
   return (
@@ -183,7 +199,7 @@ const StatusDashboard = () => {
       setAssets(combined);
 
       const s = { total: combined.length, application: 0, granted: 0, renewal: 0, expiry: 0 };
-      combined.forEach(a => { s[getStageFromStatus(a.status)]++; });
+      combined.forEach(a => { s[getStageFromStatus(a)]++; });
       setStats(s);
 
     } catch (err) {
@@ -194,7 +210,7 @@ const StatusDashboard = () => {
   };
 
   const filtered = assets.filter(a => {
-    const stage       = getStageFromStatus(a.status);
+    const stage       = getStageFromStatus(a);
     const matchStage  = stageFilter === "all" || stage === stageFilter;
     const matchType   = typeFilter  === "all" || a.assetType === typeFilter;
     const title       = a.title || a.mark || "";
@@ -298,15 +314,15 @@ const StatusDashboard = () => {
               <option value="TRADEMARK">Trademark</option>
             </select>
             <select 
-  value={jurisdictionFilter} 
-  onChange={(e) => setJurisdictionFilter(e.target.value)} 
-  className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none"
->
-  <option value="all">All Jurisdictions</option>
-  {[...new Set(assets.map(a => a.jurisdiction).filter(Boolean))].map(j => (
-    <option key={j} value={j}>{j}</option>
-  ))}
-</select>
+              value={jurisdictionFilter} 
+              onChange={(e) => setJurisdictionFilter(e.target.value)} 
+              className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none"
+            >
+              <option value="all">All Jurisdictions</option>
+              {[...new Set(assets.map(a => a.jurisdiction).filter(Boolean))].map(j => (
+                <option key={j} value={j}>{j}</option>
+              ))}
+            </select>
             <span className="text-xs text-gray-400 ml-auto">{filtered.length} asset{filtered.length !== 1 ? "s" : ""}</span>
           </div>
 
@@ -335,7 +351,7 @@ const StatusDashboard = () => {
                     </tr>
                   ) : (
                     filtered.map((asset) => {
-                      const stage       = getStageFromStatus(asset.status);
+                      const stage       = getStageFromStatus(asset);
                       const stageConfig = getStageConfig(stage);
                       const progress    = getLifecycleProgress(stage);
                       const title       = asset.title || asset.mark || "Untitled";

@@ -106,20 +106,34 @@ public class AnalystRegistrationService {
 
         AnalystRequest savedRequest = analystRequestRepository.save(request);
         
-        // Send confirmation email (if email service is configured)
+        // Send confirmation email with HTML template
         try {
-            emailService.sendEmail(
-                requestDTO.getEmail(),
-                "Analyst Registration Request Received",
-                "Dear " + requestDTO.getFirstName() + ",\n\n" +
-                "Your request for Analyst registration has been submitted successfully.\n" +
-                "Request ID: " + savedRequest.getId() + "\n" +
-                "Submitted: " + LocalDateTime.now() + "\n\n" +
-                "You will be notified once it is reviewed by our admin team.\n\n" +
-                "Thank you,\nGlobal IP Intelligence Team"
-            );
+            String htmlBody = "<!DOCTYPE html>" +
+                "<html><body style='font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;'>" +
+                "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);'>" +
+                "<div style='background-color: #2563eb; padding: 20px; text-align: center;'>" +
+                "<h1 style='color: #ffffff; margin: 0;'>Global IP Intelligence</h1>" +
+                "</div>" +
+                "<div style='padding: 30px;'>" +
+                "<h2 style='color: #1f2937;'>Analyst Registration Request Received</h2>" +
+                "<p>Dear <strong>" + requestDTO.getFirstName() + "</strong>,</p>" +
+                "<p>Thank you for submitting your request to become an Analyst on the Global IP Intelligence Platform.</p>" +
+                "<div style='background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;'>" +
+                "<p><strong>Request ID:</strong> " + savedRequest.getId() + "</p>" +
+                "<p><strong>Submitted:</strong> " + LocalDateTime.now() + "</p>" +
+                "</div>" +
+                "<p>Your application is now under review by our admin team. You will receive an email once a decision is made.</p>" +
+                "<p>If you have any questions, please contact our support team.</p>" +
+                "<br/>" +
+                "<p>Best regards,<br/><strong>Global IP Intelligence Team</strong></p>" +
+                "</div>" +
+                "<div style='background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;'>" +
+                "<p>&copy; 2026 Global IP Intelligence Platform. All rights reserved.</p>" +
+                "</div>" +
+                "</div></body></html>";
+                
+            emailService.sendEmail(requestDTO.getEmail(), "Analyst Registration Request Received", htmlBody);
         } catch (Exception e) {
-            // Log email error but don't fail the registration
             System.err.println("Failed to send email: " + e.getMessage());
         }
 
@@ -170,18 +184,32 @@ public class AnalystRegistrationService {
             request.setRejectionReason(reviewDTO.getRejectionReason());
             analystRequestRepository.save(request);
             
-            // Send rejection email
+            // Send rejection email with HTML template
             try {
-                emailService.sendEmail(
-                    request.getEmail(),
-                    "Analyst Registration Request Update",
-                    "Dear " + request.getFirstName() + ",\n\n" +
-                    "Your request for Analyst registration has been reviewed.\n" +
-                    "Status: REJECTED\n" +
-                    "Reason: " + reviewDTO.getRejectionReason() + "\n\n" +
-                    "You can contact our support team for more information.\n\n" +
-                    "Thank you,\nGlobal IP Intelligence Team"
-                );
+                String htmlBody = "<!DOCTYPE html>" +
+                    "<html><body style='font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;'>" +
+                    "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);'>" +
+                    "<div style='background-color: #dc2626; padding: 20px; text-align: center;'>" +
+                    "<h1 style='color: #ffffff; margin: 0;'>Global IP Intelligence</h1>" +
+                    "</div>" +
+                    "<div style='padding: 30px;'>" +
+                    "<h2 style='color: #1f2937;'>Analyst Registration Request Update</h2>" +
+                    "<p>Dear <strong>" + request.getFirstName() + "</strong>,</p>" +
+                    "<p>Thank you for your interest in becoming an Analyst on the Global IP Intelligence Platform.</p>" +
+                    "<div style='background-color: #fee2e2; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;'>" +
+                    "<p><strong>Status:</strong> REJECTED</p>" +
+                    "<p><strong>Reason:</strong> " + reviewDTO.getRejectionReason() + "</p>" +
+                    "</div>" +
+                    "<p>If you believe this is an error or have additional documentation, please contact our support team.</p>" +
+                    "<br/>" +
+                    "<p>Best regards,<br/><strong>Global IP Intelligence Team</strong></p>" +
+                    "</div>" +
+                    "<div style='background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;'>" +
+                    "<p>&copy; 2026 Global IP Intelligence Platform. All rights reserved.</p>" +
+                    "</div>" +
+                    "</div></body></html>";
+                    
+                emailService.sendEmail(request.getEmail(), "Analyst Registration Request Update", htmlBody);
             } catch (Exception e) {
                 System.err.println("Failed to send email: " + e.getMessage());
             }
@@ -201,19 +229,31 @@ public class AnalystRegistrationService {
         request.setStatus(RequestStatus.APPROVED);
         analystRequestRepository.save(request);
 
-        // Send approval email
+        // Send approval email with HTML template and button
         try {
-            emailService.sendEmail(
-                request.getEmail(),
-                "Analyst Registration Approved!",
-                "Dear " + request.getFirstName() + ",\n\n" +
-                "Congratulations! Your request for Analyst registration has been approved.\n\n" +
-                "You can now log in with your credentials:\n" +
-                "Email: " + request.getEmail() + "\n" +
-                "Role: ANALYST\n\n" +
-                "Login at: http://localhost:3000/login\n\n" +
-                "Thank you,\nGlobal IP Intelligence Team"
-            );
+            String htmlBody = "<!DOCTYPE html>" +
+                "<html><body style='font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;'>" +
+                "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);'>" +
+                "<div style='background-color: #2563eb; padding: 20px; text-align: center;'>" +
+                "<h1 style='color: #ffffff; margin: 0;'>Global IP Intelligence</h1>" +
+                "</div>" +
+                "<div style='padding: 30px;'>" +
+                "<h2 style='color: #1f2937;'>Congratulations – Your Analyst Registration is Approved!</h2>" +
+                "<p>Dear <strong>" + request.getFirstName() + "</strong>,</p>" +
+                "<p>We are pleased to inform you that your request to become an Analyst on the Global IP Intelligence Platform has been <strong style='color: #10b981;'>APPROVED</strong>.</p>" +
+                "<div style='background-color: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;'>" +
+                "<p><strong>Email:</strong> " + request.getEmail() + "</p>" +
+                "<p><strong>Role:</strong> ANALYST</p>" +
+                "<p>We look forward to your contributions to the platform!</p>" +
+                "<br/>" +
+                "<p>Best regards,<br/><strong>Global IP Intelligence Team</strong></p>" +
+                "</div>" +
+                "<div style='background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;'>" +
+                "<p>&copy; 2026 Global IP Intelligence Platform. All rights reserved.</p>" +
+                "</div>" +
+                "</div></body></html>";
+                
+            emailService.sendEmail(request.getEmail(), "Analyst Registration Approved!", htmlBody);
         } catch (Exception e) {
             System.err.println("Failed to send email: " + e.getMessage());
         }
@@ -230,34 +270,48 @@ public class AnalystRegistrationService {
     }
 
     private AnalystRequestResponseDTO convertToDTO(AnalystRequest request) {
-    List<String> documents = new ArrayList<>();
-    if (request.getPatentAgentLicensePath() != null) {
-        documents.add("Patent Agent License");
-    }
-    if (request.getLawCouncilIdPath() != null) {
-        documents.add("Law Council ID");
-    }
-    if (request.getCompanyProofPath() != null) {
-        documents.add("Company Proof");
-    }
-    if (request.getResearchInstitutionProofPath() != null) {
-        documents.add("Research Institution Proof");
+        List<String> documents = new ArrayList<>();
+        if (request.getPatentAgentLicensePath() != null) {
+            documents.add("Patent Agent License");
+        }
+        if (request.getLawCouncilIdPath() != null) {
+            documents.add("Law Council ID");
+        }
+        if (request.getCompanyProofPath() != null) {
+            documents.add("Company Proof");
+        }
+        if (request.getResearchInstitutionProofPath() != null) {
+            documents.add("Research Institution Proof");
+        }
+
+        return new AnalystRequestResponseDTO(
+            request.getId(),
+            request.getFirstName(),
+            request.getLastName(),
+            request.getEmail(),
+            request.getCredentialType(),
+            request.getCredentialNumber(),
+            request.getStatus().toString(),
+            request.getSubmittedAt(),
+            documents,
+            request.getPatentAgentLicensePath(),  
+            request.getLawCouncilIdPath(),        
+            request.getCompanyProofPath(),        
+            request.getResearchInstitutionProofPath() 
+        );
     }
 
-    return new AnalystRequestResponseDTO(
-        request.getId(),
-        request.getFirstName(),
-        request.getLastName(),
-        request.getEmail(),
-        request.getCredentialType(),
-        request.getCredentialNumber(),
-        request.getStatus().toString(),
-        request.getSubmittedAt(),
-        documents,
-        request.getPatentAgentLicensePath(),  
-        request.getLawCouncilIdPath(),        
-        request.getCompanyProofPath(),        
-        request.getResearchInstitutionProofPath() 
-    );
+    public long getPendingRequestsCount() {
+    return analystRequestRepository.countByStatus(RequestStatus.PENDING);
 }
+
+public long getApprovedTodayCount() {
+    return analystRequestRepository.countByStatusAndReviewedAtToday(RequestStatus.APPROVED.name());
+}
+
+public long getRejectedTodayCount() {
+    return analystRequestRepository.countByStatusAndReviewedAtToday(RequestStatus.REJECTED.name());
+}
+
+
 }

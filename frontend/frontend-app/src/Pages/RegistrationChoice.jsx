@@ -22,7 +22,7 @@ const RegistrationChoice = () => {
         <div className="grid md:grid-cols-2 gap-8">
           
           {/* User Registration Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 hover:shadow-2xl transition transform hover:-translate-y-1">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 hover:shadow-2xl transition transform hover:-translate-y-1 border-2 border-blue-200 dark:border-blue-900">
             <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-6 mx-auto">
               <User size={32} className="text-blue-600 dark:text-blue-400" />
             </div>

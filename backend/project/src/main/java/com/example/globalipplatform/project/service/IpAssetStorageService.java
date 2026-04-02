@@ -12,6 +12,7 @@ import com.example.globalipplatform.project.repository.UserSavedIpAssetRepositor
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,33 +34,41 @@ public class IpAssetStorageService {
         this.trademarkRepository = trademarkRepository;
     }
 
-    /** Save a patent or trademark to the user's IP assets. Asset must already exist in DB (e.g. from search). */
+
     @Transactional
     public SavedIpAssetItemDTO save(Long userId, String type, Long assetId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
-        if ("PATENT".equalsIgnoreCase(type)) {
-            Patent patent = patentRepository.findById(assetId).orElseThrow(() -> new IllegalArgumentException("Patent not found"));
-            if (savedAssetRepository.existsByUserIdAndPatentId(userId, assetId))
-                return toItem(userId, type, patent, null);
-            UserSavedIpAsset saved = UserSavedIpAsset.builder()
+    User user = userRepository.findById(userId).orElseThrow();
+    if ("PATENT".equalsIgnoreCase(type)) {
+        Patent patent = patentRepository.findById(assetId).orElseThrow();
+        if (savedAssetRepository.existsByUserIdAndPatentId(userId, assetId)) {
+            throw new IllegalArgumentException("Already saved");
+        }
+        UserSavedIpAsset saved = UserSavedIpAsset.builder()
                 .user(user)
                 .patent(patent)
+                .savedAt(LocalDateTime.now())
                 .build();
-            savedAssetRepository.save(saved);
-            return toItem(userId, type, patent, null);
-        } else if ("TRADEMARK".equalsIgnoreCase(type)) {
-            Trademark trademark = trademarkRepository.findById(assetId).orElseThrow(() -> new IllegalArgumentException("Trademark not found"));
-            if (savedAssetRepository.existsByUserIdAndTrademarkId(userId, assetId))
-                return toItem(userId, type, null, trademark);
-            UserSavedIpAsset saved = UserSavedIpAsset.builder()
+        saved = savedAssetRepository.save(saved);
+        return toItem(saved);
+    } else if ("TRADEMARK".equalsIgnoreCase(type)) {
+        Trademark trademark = trademarkRepository.findById(assetId).orElseThrow();
+        if (savedAssetRepository.existsByUserIdAndTrademarkId(userId, assetId)) {
+            throw new IllegalArgumentException("Already saved");
+        }
+        UserSavedIpAsset saved = UserSavedIpAsset.builder()
                 .user(user)
                 .trademark(trademark)
+                .savedAt(LocalDateTime.now())
                 .build();
-            savedAssetRepository.save(saved);
-            return toItem(userId, type, null, trademark);
-        }
-        throw new IllegalArgumentException("type must be PATENT or TRADEMARK");
+        saved = savedAssetRepository.save(saved);
+        return toItem(saved);
+    } else {
+        throw new IllegalArgumentException("Invalid type: " + type);
     }
+}
+
+    
+
 
     @Transactional
     public void remove(Long userId, String type, Long assetId) {

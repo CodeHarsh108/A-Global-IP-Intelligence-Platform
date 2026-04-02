@@ -3,8 +3,14 @@ package com.example.globalipplatform.project.controller;
 import com.example.globalipplatform.project.DTO.PatentDTO;
 import com.example.globalipplatform.project.DTO.PatentSearchRequest;
 import com.example.globalipplatform.project.DTO.PatentSearchResponse;
+import com.example.globalipplatform.project.entity.User;
+import com.example.globalipplatform.project.entity.UserSearch;
+import com.example.globalipplatform.project.repository.UserRepository;
+import com.example.globalipplatform.project.repository.UserSearchRepository;
 import com.example.globalipplatform.project.service.IPService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -12,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.Authenticator;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,13 +32,21 @@ public class PatentController {
     @Autowired
     private IPService ipService;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private UserSearchRepository userSearchRepository;
+
     @PostMapping("/search")
     public ResponseEntity<?> searchPatents(
             @RequestBody PatentSearchRequest request,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String sortBy,
-            @RequestParam(defaultValue = "desc") String sortOrder) {
+            @RequestParam(defaultValue = "desc") String sortOrder,
+            Authentication authentication
+        ) {
 
          
         try {
@@ -46,6 +62,20 @@ public class PatentController {
             Pageable pageable = PageRequest.of(page, size, sort);
             
             PatentSearchResponse response = ipService.searchPatents(request, pageable);
+             if (authentication != null && authentication.isAuthenticated()) {
+                String email = authentication.getName();
+                User user = userRepository.findByEmail(email).orElse(null);
+                if (user != null) {
+                    UserSearch userSearch = UserSearch.builder()
+                            .user(user)
+                            .query(request.getQuery() != null ? request.getQuery() : "")
+                            .filters(buildFiltersString(request))
+                            .resultCount((int) response.getTotalElements())
+                            .searchedAt(LocalDateTime.now())
+                            .build();
+                    userSearchRepository.save(userSearch);
+                }
+            }
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
@@ -55,6 +85,19 @@ public class PatentController {
         }
 
     }
+
+
+    private String buildFiltersString(PatentSearchRequest request) {
+        // Simple concatenation – can be improved
+        StringBuilder sb = new StringBuilder();
+        if (request.getJurisdiction() != null) sb.append("jurisdiction:").append(request.getJurisdiction()).append(";");
+        if (request.getStatus() != null) sb.append("status:").append(request.getStatus()).append(";");
+        if (request.getAssignee() != null) sb.append("assignee:").append(request.getAssignee()).append(";");
+        if (request.getTechnology() != null) sb.append("technology:").append(request.getTechnology()).append(";");
+        return sb.toString();
+    }
+    
+
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
