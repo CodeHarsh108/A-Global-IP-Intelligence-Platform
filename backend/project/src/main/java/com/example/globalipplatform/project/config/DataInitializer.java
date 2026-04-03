@@ -69,9 +69,8 @@ public class DataInitializer {
             // Seed IP data
             if (generateOnStartup) {
                 long patentCount = patentRepository.count();
-                System.out.println("📊 Current Patent Count: " + patentCount);
-                
-                if (patentCount != 1000) {
+                if (patentCount == 0) {
+                    System.out.println("⚠️ Database empty. Seeding fresh Patents (" + patentSize + ")...");
                     System.out.println("⚠️ Data mismatch (Found " + patentCount + "). Wiping related data first...");
                     
                     // Safely clear all tables that depend on Patents/Trademarks
@@ -94,9 +93,8 @@ public class DataInitializer {
                 }
 
                 long tmCount = trademarkRepository.count();
-                System.out.println("📊 Current Trademark Count: " + tmCount);
-                if (tmCount != 500) {
-                    System.out.println("⚠️ Wiping and seeding fresh Trademarks (500)...");
+                if (tmCount == 0) {
+                    System.out.println("⚠️ Database empty. Seeding fresh Trademarks (" + trademarkSize + ")...");
                     try {
                         trademarkRepository.deleteAll(); 
                         seedTrademarks(trademarkRepository);
