@@ -4,9 +4,9 @@ function ApiLogs() {
   const [logs, setLogs] = useState([]);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken"); // ✅ get JWT token
+    const token = localStorage.getItem("accessToken"); 
 
-    fetch("http://localhost:8080/admin/logs", {
+    fetch("https://global-ip-backend.onrender.com/api/admin/logs", {
         headers: {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`
         }

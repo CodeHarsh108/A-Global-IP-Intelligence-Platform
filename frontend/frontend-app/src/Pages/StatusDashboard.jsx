@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import DashboardLayout from "../components/layouts/DashboardLayout";
 
-const API_BASE = "http://localhost:8080/api";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
+
 
 const getAuthHeader = () => {
   const token = localStorage.getItem("accessToken");
@@ -178,8 +179,8 @@ const StatusDashboard = () => {
 
     try {
       const [patentsRes, trademarksRes] = await Promise.allSettled([
-        axios.post(`${API_BASE}/ip/patents/search?page=0&size=50&sortBy=filingDate&sortOrder=desc`, {}, { headers }),
-        axios.post(`${API_BASE}/ip/trademarks/search?page=0&size=50&sortBy=filingDate&sortOrder=desc`, {}, { headers }),
+        axios.post(`${API_BASE_URL}/ip/patents/search?page=0&size=50&sortBy=filingDate&sortOrder=desc`, {}, { headers }),
+        axios.post(`${API_BASE_URL}/ip/trademarks/search?page=0&size=50&sortBy=filingDate&sortOrder=desc`, {}, { headers }),
       ]);
 
       let combined = [];

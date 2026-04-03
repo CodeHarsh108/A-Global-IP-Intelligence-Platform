@@ -14,8 +14,7 @@ const AdminRequestManagement = () => {
   const [stats, setStats] = useState({ pending: 0, approvedToday: 0, rejectedToday: 0 });
 
 
-  const API_BASE_URL = "http://localhost:8080";
-
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
   useEffect(() => {
     fetchRequests();
     fetchStats();
@@ -24,7 +23,7 @@ const AdminRequestManagement = () => {
   const fetchStats = async () => {
   try {
     const token = localStorage.getItem("accessToken");
-    const response = await axios.get(`${API_BASE_URL}/api/admin/analyst-requests/stats`, {
+    const response = await axios.get(`${API_BASE_URL}/admin/analyst-requests/stats`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     setStats(response.data);
@@ -39,7 +38,7 @@ const AdminRequestManagement = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        `${API_BASE_URL}/api/admin/analyst-requests/pending`,
+        `${API_BASE_URL}/admin/analyst-requests/pending`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -49,9 +48,9 @@ const AdminRequestManagement = () => {
       console.log("Fetched requests:", response.data);
       setRequests(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
-      console.error("Error fetching requests:", error);
-      setError(error.response?.data || "Failed to fetch requests");
-      setRequests([]);
+     console.error("Error fetching requests:", error);
+  const errMsg = error.response?.data?.error || error.response?.data || "Failed to fetch requests";
+  setError(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     } finally {
       setLoading(false);
     }
@@ -62,7 +61,7 @@ const AdminRequestManagement = () => {
     try {
       const token = localStorage.getItem("accessToken");
       await axios.post(
-        `${API_BASE_URL}/api/admin/analyst-requests/review`,
+        `${API_BASE_URL}/admin/analyst-requests/review`,
         {
           requestId,
           approved: true,
@@ -91,7 +90,7 @@ const AdminRequestManagement = () => {
     try {
       const token = localStorage.getItem("accessToken");
       await axios.post(
-        `${API_BASE_URL}/api/admin/analyst-requests/review`,
+        `${API_BASE_URL}/admin/analyst-requests/review`,
         {
           requestId,
           approved: false,
@@ -133,7 +132,7 @@ const AdminRequestManagement = () => {
   const viewDocument = (requestId, documentType) => {
     const token = localStorage.getItem("accessToken");
     window.open(
-      `${API_BASE_URL}/api/files/view/${requestId}/${documentType}?token=${token}`,
+      `${API_BASE_URL}/files/view/${requestId}/${documentType}?token=${token}`,
       '_blank'
     );
   };
@@ -141,7 +140,7 @@ const AdminRequestManagement = () => {
   const downloadDocument = (requestId, documentType) => {
     const token = localStorage.getItem("accessToken");
     window.open(
-      `${API_BASE_URL}/api/files/download/${requestId}/${documentType}?token=${token}`,
+      `${API_BASE_URL}/files/download/${requestId}/${documentType}?token=${token}`,
       '_blank'
     );
   };

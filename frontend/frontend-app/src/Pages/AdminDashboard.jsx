@@ -3,8 +3,7 @@ import DashboardLayout from "../components/layouts/DashboardLayout";
 import axios from "axios";
 import { Loader2, Users, UserCheck, Clock, Shield } from "lucide-react";
 
-const API_BASE_URL = "http://localhost:8080/api";
-const getAuthHeader = () => {
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";const getAuthHeader = () => {
   const token = localStorage.getItem("accessToken");
   return token ? { Authorization: `Bearer ${token}` } : {};
 };

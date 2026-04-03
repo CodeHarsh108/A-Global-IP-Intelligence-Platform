@@ -5,6 +5,9 @@ import axios from "axios";
 
 const AnalystRegistration = () => {
   const navigate = useNavigate();
+
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
+
   
   // Form data
   const [formData, setFormData] = useState({
@@ -230,7 +233,7 @@ const AnalystRegistration = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/analyst-registration/submit",
+        `${API_BASE_URL}/analyst-registration/submit`,
         formDataToSend,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -242,7 +245,11 @@ const AnalystRegistration = () => {
       }, 3000);
     } catch (error) {
       console.error("Submission error:", error);
-      setErrorMessage(error.response?.data || "Submission failed. Please try again.");
+  const errorMsg = error.response?.data?.error || 
+                   error.response?.data || 
+                   error.message || 
+                   "Submission failed. Please try again.";
+  setErrorMessage(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
     } finally {
       setLoading(false);
     }

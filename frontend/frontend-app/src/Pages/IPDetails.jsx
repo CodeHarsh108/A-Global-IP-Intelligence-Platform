@@ -9,7 +9,7 @@ import {
 import DashboardLayout from "../components/layouts/DashboardLayout";
 import { useAuth } from "../context/AuthContext";
 
-const API_BASE_URL = "http://localhost:8080/api";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
 
 const getAuthHeader = () => {
   const token = localStorage.getItem("accessToken");
@@ -226,8 +226,9 @@ const IPDetailPage = () => {
         setBookmarked(true);
       }
     } catch (err) {
-      console.error("Failed to save/unsave asset:", err);
-      alert("Could not update saved status. Please try again.");
+       console.error("Failed to save/unsave asset:", err);
+  const msg = err.response?.data?.error || err.message || "Could not update saved status";
+  alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
     } finally {
       setSaving(false);
     }
@@ -251,8 +252,9 @@ const IPDetailPage = () => {
         setSubscribed(true);
       }
     } catch (err) {
-      console.error("Subscription action failed:", err);
-      alert("Failed to update subscription. Please try again.");
+       console.error("Failed to save/unsave asset:", err);
+  const msg = err.response?.data?.error || err.message || "Could not update saved status";
+  alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
     } finally {
       setSubLoading(false);
     }

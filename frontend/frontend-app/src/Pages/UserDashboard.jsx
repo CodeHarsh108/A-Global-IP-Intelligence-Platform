@@ -3,7 +3,7 @@ import axios from "axios";
 import DashboardLayout from "../components/layouts/DashboardLayout";
 import { Search, Bookmark, Bell, Clock, Activity, FileText, Eye, Calendar } from "lucide-react";
 
-const API_BASE_URL = "http://localhost:8080/api";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
 const getAuthHeader = () => {
   const token = localStorage.getItem("accessToken");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -31,7 +31,8 @@ const UserDashboard = () => {
       setActivities(activityRes.data);
     } catch (err) {
       console.error("Failed to load dashboard data:", err);
-      setError("Unable to load your dashboard. Please try again later.");
+  const msg = err.response?.data?.error || err.message || "Unable to load your dashboard";
+  setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
     } finally {
       setLoading(false);
     }
