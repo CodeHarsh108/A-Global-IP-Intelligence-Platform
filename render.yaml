@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: global-ip-backend
+    env: java
+    region: singapore # Adjust region if needed
+    plan: free
+    buildCommand: "mvn clean install -DskipTests"
+    startCommand: "java -jar target/project-0.0.1-SNAPSHOT.jar"
+    rootDir: backend/project
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: ipplatform-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: ipplatform-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: ipplatform-db
+          property: password
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: ALLOWED_ORIGINS
+        value: "http://localhost:3000"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+
+databases:
+  - name: ipplatform-db
+    databaseName: global_ip_db
+    user: postgres
+    plan: free
