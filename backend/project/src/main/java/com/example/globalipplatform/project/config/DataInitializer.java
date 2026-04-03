@@ -127,6 +127,7 @@ public class DataInitializer {
         String[] statuses = {"Granted", "Pending", "Published", "Expired"};
         String[] technologies = {"Artificial Intelligence", "Biotechnology", "Blockchain", "Clean Energy", "Cybersecurity", "IoT"};
 
+        java.util.List<Patent> patentList = new java.util.ArrayList<>();
         for (int i = 0; i < patentSize; i++) {
             Patent p = new Patent();
             p.setTitle(titles[i % titles.length] + (i > titles.length ? " (" + i + ")" : ""));
@@ -139,8 +140,9 @@ public class DataInitializer {
             p.setAssignee(assignees[rand.nextInt(assignees.length)]);
             p.setInventors("Dr. Scientist " + i);
             p.setFilingDate(LocalDateTime.now().minusMonths(rand.nextInt(60)));
-            repo.save(p);
+            patentList.add(p);
         }
+        repo.saveAll(patentList);
         System.out.println("✅ Seeded " + patentSize + " mock patents.");
     }
 
@@ -151,6 +153,7 @@ public class DataInitializer {
         String[] jurisdictions = {"USPTO", "EUIPO", "WIPO", "UKIPO"};
         String[] statuses = {"Registered", "Pending", "Opposition", "Expired"};
 
+        java.util.List<Trademark> tmList = new java.util.ArrayList<>();
         for (int i = 0; i < trademarkSize; i++) {
             Trademark t = new Trademark();
             t.setMark(marks[i % marks.length]);
@@ -161,8 +164,9 @@ public class DataInitializer {
             t.setStatus(statuses[rand.nextInt(statuses.length)]);
             t.setAssignee(owners[rand.nextInt(owners.length)]);
             t.setFilingDate(LocalDateTime.now().minusMonths(rand.nextInt(48)));
-            repo.save(t);
+            tmList.add(t);
         }
+        repo.saveAll(tmList);
         System.out.println("✅ Seeded " + trademarkSize + " mock trademarks.");
     }
 }
